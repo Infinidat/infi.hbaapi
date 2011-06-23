@@ -3,6 +3,17 @@ import unittest
 import mock
 import logging
 
+class MockGenerator(object):
+    def __init__(self):
+        object.__init__(self)
+
+    def iter_ports(self):
+        return []
+
+    @classmethod
+    def is_available(cls):
+        return True
+
 class TestCase(unittest.TestCase):
     def test_imports(self):
         from .. import get_ports_collection, get_ports_generator
@@ -24,7 +35,13 @@ class TestCase(unittest.TestCase):
 
     def test_real_thing(self):
         from .. import get_ports_collection
-        ports = get_ports_collection()
+        ports = [port for port in get_ports_collection().iter_ports()]
+
+    @mock.patch("infi.hbaapi.generators.get_list_of_generators")
+    def test_with_mock_generator(self, mock):
+        mock.return_value = [MockGenerator]
+        from .. import get_ports_collection
+        ports = [port for port in get_ports_collection().iter_ports()]
 
 class PortAssertions(object):
     def __init__(self, test_case):
