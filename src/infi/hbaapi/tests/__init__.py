@@ -24,7 +24,7 @@ class TestCase(unittest.TestCase):
 
     def test_real_thing(self):
         from .. import get_ports_collection
-        ports = get_ports_collection()
+        ports = [port for port in get_ports_collection().iter_ports()]
 
 class PortAssertions(object):
     def __init__(self, test_case):
