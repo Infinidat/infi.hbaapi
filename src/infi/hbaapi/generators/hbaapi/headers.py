@@ -5,7 +5,11 @@ Created on Jun 20, 2011
 '''
 
 import ctypes
-from construct import Struct, String, UNInt32, UNInt8, Array, SNInt64
+from infi.instruct import Struct
+from infi.instruct import FixedSizeArray as Array
+from infi.instruct import FixedSizeString as String
+from infi.instruct import UNInt32, UNInt8, SNInt64
+
 ##############
 # Data Types #
 ##############
@@ -26,76 +30,78 @@ HBA_COS = HBA_UINT32
 # Structures #
 ##############
 
-NodeWWN = Struct("NodeWWN",
-                 Array(8, UNInt8("wwn")))
+FiberChannelWWN = Array("wwn", 8, UNInt8)
+NodeWWN = FiberChannelWWN
+PortWWN = FiberChannelWWN
+FabricName = FiberChannelWWN
 
-PortWWN = Struct("PortWWN",
-                 Array(8, UNInt8("wwn")))
+BitsArray = Array('bits', 32, UNInt8)
+PortSupportedFc4Types = BitsArray
+PortActiveFc4Types = BitsArray
 
-FabricName = Struct("FabricName",
-                 Array(8, UNInt8("wwn")))
+class HBA_AdapterAttributes(Struct):
+    _fields_ = [
+               String("Manufacturer", 64),
+               String("SerialNumber", 64),
+               String("Model", 256),
+               String("ModelDescription", 256),
+               NodeWWN,
+               String("NodeSymbolicName", 256),
+               String("HardwareVersion", 256),
+               String("DriverVersion", 256),
+               String("OptionROMVersion", 256),
+               String("FirmwareVersion", 256),
+               UNInt32("VendorSpecificID"),
+               UNInt32("NumberOfPorts"),
+               String("DriverName", 256)
+               ]
 
-PortSupportedFc4Types = Struct("PortSupportedFc4Types",
-                               Array(32, UNInt8("bits")))
+class HBA_PortAttributes(Struct):
+    _fields_ = [
+                NodeWWN,
+                PortWWN,
+                UNInt32("PortFcId"),
+                UNInt32("PortType"),
+                UNInt32("PortState"),
+                UNInt32("PortSupportedClassofService"),
+                PortSupportedFc4Types,
+                PortActiveFc4Types,
+                String("PortSymbolicName", 256),
+                String("OSDeviceName", 256),
+                UNInt32("PortSuggestedSpeed"),
+                UNInt32("PortSpeed"),
+                UNInt32("PortMaxFrameSize"),
+                FabricName,
+                UNInt32("NumberOfDiscoveredPorts")
+                ]
 
-PortActiveFc4Types = Struct("PortActiveFc4Types",
-                               Array(32, UNInt8("bits")))
+class HBA_PortStatistics(Struct):
+    _fields_ = [
+                SNInt64("SecondsSinceLastReset"),
+                SNInt64("TxFrames"),
+                SNInt64("TxWords"),
+                SNInt64("RxFrames"),
+                SNInt64("RxWords"),
+                SNInt64("LIPCount"),
+                SNInt64("NOSCount"),
+                SNInt64("ErrorFrames"),
+                SNInt64("DumpedFrames"),
+                SNInt64("LinkFailureCount"),
+                SNInt64("LossOfSyncCount"),
+                SNInt64("LossOfSignalCount"),
+                SNInt64("PrimitiveSeqProtocolErrCount"),
+                SNInt64("InvalidTxWordCount"),
+                SNInt64("InvalidCRCCount")
+                ]
 
-HBA_AdapterAttributes = Struct("HBA_AdapterAttributes",
-                               String("Manufacturer", length=64, padchar='\x00'),
-                               String("SerialNumber", length=64, padchar='\x00'),
-                               String("Model", length=256, padchar='\x00'),
-                               String("ModelDescription", length=256, padchar='\x00'),
-                               NodeWWN,
-                               String("NodeSymbolicName", length=256, padchar='\x00'),
-                               String("HardwareVersion", length=256, padchar='\x00'),
-                               String("DriverVersion", length=256, padchar='\x00'),
-                               String("OptionROMVersion", length=256, padchar='\x00'),
-                               String("FirmwareVersion", length=256, padchar='\x00'),
-                               UNInt32("VendorSpecificID"),
-                               UNInt32("NumberOfPorts"),
-                               String("DriverName", length=256, padchar='\x00'))
-
-HBA_PortAttributes = Struct("HBA_PortAttributes",
-                            NodeWWN,
-                            PortWWN,
-                            UNInt32("PortFcId"),
-                            UNInt32("PortType"),
-                            UNInt32("PortState"),
-                            UNInt32("PortSupportedClassofService"),
-                            PortSupportedFc4Types,
-                            PortActiveFc4Types,
-                            String("PortSymbolicName", length=256, padchar='\x00'),
-                            String("OSDeviceName", length=256, padchar='\x00'),
-                            UNInt32("PortSuggestedSpeed"),
-                            UNInt32("PortSpeed"),
-                            UNInt32("PortMaxFrameSize"),
-                            FabricName,
-                            UNInt32("NumberOfDiscoveredPorts"))
-
-HBA_PortStatistics = Struct("HBA_PortStatistics",
-                            SNInt64("SecondsSinceLastReset"),
-                            SNInt64("TxFrames"),
-                            SNInt64("TxWords"),
-                            SNInt64("RxFrames"),
-                            SNInt64("RxWords"),
-                            SNInt64("LIPCount"),
-                            SNInt64("NOSCount"),
-                            SNInt64("ErrorFrames"),
-                            SNInt64("DumpedFrames"),
-                            SNInt64("LinkFailureCount"),
-                            SNInt64("LossOfSyncCount"),
-                            SNInt64("LossOfSignalCount"),
-                            SNInt64("PrimitiveSeqProtocolErrCount"),
-                            SNInt64("InvalidTxWordCount"),
-                            SNInt64("InvalidCRCCount"))
-
-HBA_FC4Statistics = Struct("HBA_FC4Statistics",
-                           SNInt64("InputRequests"),
-                           SNInt64("OutputRequests"),
-                           SNInt64("ControlRequests"),
-                           SNInt64("InputMegabytes"),
-                           SNInt64("OutputMegabytes"))
+class HBA_FC4Statistics(Struct):
+    _fields = [
+               SNInt64("InputRequests"),
+               SNInt64("OutputRequests"),
+               SNInt64("ControlRequests"),
+               SNInt64("InputMegabytes"),
+               SNInt64("OutputMegabytes")
+               ]
 
 #############
 # Constants #

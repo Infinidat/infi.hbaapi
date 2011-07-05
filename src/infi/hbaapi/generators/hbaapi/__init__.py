@@ -21,19 +21,19 @@ class HbaApi(Generator):
     def _get_adapter_attributes(self, adapter_handle):
         buffer = ctypes.c_buffer(headers.HBA_AdapterAttributes.sizeof())
         c_api.HBA_GetAdapterAttributes(adapter_handle, buffer)
-        adapter_attributes = headers.HBA_AdapterAttributes.parse(buffer)
+        adapter_attributes = headers.HBA_AdapterAttributes.create_instance_from_string(buffer)
         return adapter_attributes
 
     def _get_port_attributes(self, adapter_handle, port_index):
         buffer = ctypes.c_buffer(headers.HBA_PortAttributes.sizeof())
         c_api.HBA_GetAdapterPortAttributes(adapter_handle, port_index, buffer)
-        port_attributes = headers.HBA_PortAttributes.parse(buffer)
+        port_attributes = headers.HBA_PortAttributes.create_instance_from_string(buffer)
         return port_attributes
 
     def _get_remote_port_attributes(self, adapter_handle, port_index, remote_port_index):
         buffer = ctypes.c_buffer(headers.HBA_PortAttributes.sizeof())
         c_api.HBA_GetDiscoveredPortAttributes(adapter_handle, port_index, remote_port_index, buffer)
-        remote_port_attributes = headers.HBA_PortAttributes.parse(buffer)
+        remote_port_attributes = headers.HBA_PortAttributes.create_instance_from_string(buffer)
         return remote_port_attributes
 
     def _get_remote_ports(self, adapter_handle, port_index, number_of_remote_ports):
@@ -59,12 +59,12 @@ class HbaApi(Generator):
 
         buffer = ctypes.c_buffer(headers.HBA_PortStatistics.sizeof())
         c_api.HBA_GetPortStatistics(adapter_handle, port_index, buffer)
-        hba_port_stats = headers.HBA_PortStatistics.parse(buffer)
+        hba_port_stats = headers.HBA_PortStatistics.create_instance_from_string(buffer)
 
         try:
             buffer = ctypes.c_buffer(headers.HBA_FC4Statistics.sizeof())
             c_api.HBA_GetFC4Statistics(adapter_handle, port_index, buffer)
-            hba_fc4_stats = headers.HBA_FC4Statistics.parse(buffer)
+            hba_fc4_stats = headers.HBA_FC4Statistics.create_instance_from_string(buffer)
         except NotImplementedError:
             # some HBAs do not have these statistics
             pass
