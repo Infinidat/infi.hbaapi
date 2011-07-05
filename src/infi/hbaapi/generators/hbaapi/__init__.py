@@ -127,7 +127,7 @@ class HbaApi(Generator):
 
 def translate_wwn(source):
     from construct import Container
-    return ':'.join([hex(item).lstrip('0x').zfill(2) for item in source.wwn])
+    return ':'.join([hex(item).lstrip('0x').zfill(2) for item in source])
 
 def translate_port_speed(source):
     """ PortSpeed indicates the signalling bit rate at which this port is currently operating.

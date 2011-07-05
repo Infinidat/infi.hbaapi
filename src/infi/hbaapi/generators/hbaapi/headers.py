@@ -30,14 +30,13 @@ HBA_COS = HBA_UINT32
 # Structures #
 ##############
 
-FiberChannelWWN = Array("wwn", 8, UNInt8)
-NodeWWN = FiberChannelWWN
-PortWWN = FiberChannelWWN
-FabricName = FiberChannelWWN
-
+NodeWWN = Array("NodeWWN", 8, UNInt8)
+PortWWN = Array("PortWWN", 8, UNInt8)
+FabricName = Array("FabricName", 8, UNInt8)
 BitsArray = Array('bits', 32, UNInt8)
-PortSupportedFc4Types = BitsArray
-PortActiveFc4Types = BitsArray
+
+PortSupportedFc4Types = Array("PortSupportedFc4Types", 32, UNInt8)
+PortActiveFc4Types = Array("PortActiveFc4Types", 32, UNInt8)
 
 class HBA_AdapterAttributes(Struct):
     _fields_ = [
@@ -95,7 +94,7 @@ class HBA_PortStatistics(Struct):
                 ]
 
 class HBA_FC4Statistics(Struct):
-    _fields = [
+    _fields_ = [
                SNInt64("InputRequests"),
                SNInt64("OutputRequests"),
                SNInt64("ControlRequests"),
