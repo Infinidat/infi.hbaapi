@@ -4,7 +4,6 @@ import logging
 import unittest
 import mock
 from contextlib import contextmanager, nested
-from construct import Container
 from os.path import exists, join, sep, dirname, pardir, abspath
 from ... import hbaapi
 from .. import headers, c_api

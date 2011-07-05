@@ -126,7 +126,6 @@ class HbaApi(Generator):
         c_api.HBA_CloseAdapter(handle)
 
 def translate_wwn(source):
-    from construct import Container
     return ':'.join([hex(item).lstrip('0x').zfill(2) for item in source])
 
 def translate_port_speed(source):
