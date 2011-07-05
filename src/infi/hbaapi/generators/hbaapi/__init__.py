@@ -194,7 +194,7 @@ def get_port_object(adapter_attributes=Bunch(), port_attributes=Bunch()):
     kwargs['driver_version'] = getattr(adapter_attributes, "DriverVersion", '').strip('\x00')
     kwargs['manufacturer'] = getattr(adapter_attributes, "Manufacturer", '').strip('\x00')
     kwargs['serial_number'] = getattr(adapter_attributes, "SerialNumber", '').strip('\x00')
-    kwargs['model'] = getattr(adapter_attributes, "Model", '')..strip('\x00')
+    kwargs['model'] = getattr(adapter_attributes, "Model", '').strip('\x00')
     kwargs['model_description'] = getattr(adapter_attributes, "ModelDescription", '').strip('\x00')
     kwargs['hardware_version'] = getattr(adapter_attributes, "HardwareVersion", '').strip('\x00')
     kwargs['firmware_version'] = getattr(adapter_attributes, "FirmwareVersion", '').strip('\x00')
