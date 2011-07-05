@@ -177,31 +177,28 @@ def translate_port_state(source):
                    headers.HBA_PORTSTATE_LOOPBACK: 'lookback'}
     return translation[source]
 
-def translate_os_device_name(source):
-    return source.strip('\x00')
-
 def get_port_object(adapter_attributes=Bunch(), port_attributes=Bunch()):
     kwargs = {}
     kwargs['node_wwn'] = translate_wwn(getattr(adapter_attributes, "NodeWWN", None) or \
                                        getattr(port_attributes, "NodeWWN", None))
     kwargs['port_wwn'] = translate_wwn(getattr(port_attributes, "PortWWN"))
-    kwargs['port_fcid'] = getattr(port_attributes, "PortFcId")
+    kwargs['port_fcid'] = getattr(port_attributes, "PortFcId").strip('\x00')
     kwargs['port_state'] = translate_port_state(getattr(port_attributes, "PortState"))
     kwargs['port_speed'] = translate_port_speed(getattr(port_attributes, "PortSpeed"))
-    kwargs['port_symbolic_name'] = getattr(port_attributes, "PortSymbolicName")
-    kwargs['os_device_name'] = translate_os_device_name(getattr(port_attributes, "OSDeviceName"))
+    kwargs['port_symbolic_name'] = getattr(port_attributes, "PortSymbolicName").strip('\x00')
+    kwargs['os_device_name'] = getattr(port_attributes, "OSDeviceName").strip('\x00')
     kwargs['port_supported_speeds'] = translate_port_supported_speeds(getattr(port_attributes, "PortSuggestedSpeed"))
     kwargs['port_max_frame_size'] = getattr(port_attributes, "PortMaxFrameSize", None)
     kwargs['fabric_name'] = translate_wwn(getattr(port_attributes, "FabricName", None))
-    kwargs['driver_name'] = getattr(adapter_attributes, "DriverName", None)
-    kwargs['driver_version'] = getattr(adapter_attributes, "DriverVersion", None)
-    kwargs['manufacturer'] = getattr(adapter_attributes, "Manufacturer", None)
-    kwargs['serial_number'] = getattr(adapter_attributes, "SerialNumber", None)
-    kwargs['model'] = getattr(adapter_attributes, "Model", None)
-    kwargs['model_description'] = getattr(adapter_attributes, "ModelDescription", None)
-    kwargs['hardware_version'] = getattr(adapter_attributes, "HardwareVersion", None)
-    kwargs['firmware_version'] = getattr(adapter_attributes, "FirmwareVersion", None)
-    kwargs['option_rom_version'] = getattr(adapter_attributes, "OptionROMVersion", None)
+    kwargs['driver_name'] = getattr(adapter_attributes, "DriverName", '').strip('\x00')
+    kwargs['driver_version'] = getattr(adapter_attributes, "DriverVersion", '').strip('\x00')
+    kwargs['manufacturer'] = getattr(adapter_attributes, "Manufacturer", '').strip('\x00')
+    kwargs['serial_number'] = getattr(adapter_attributes, "SerialNumber", '').strip('\x00')
+    kwargs['model'] = getattr(adapter_attributes, "Model", '')..strip('\x00')
+    kwargs['model_description'] = getattr(adapter_attributes, "ModelDescription", '').strip('\x00')
+    kwargs['hardware_version'] = getattr(adapter_attributes, "HardwareVersion", '').strip('\x00')
+    kwargs['firmware_version'] = getattr(adapter_attributes, "FirmwareVersion", '').strip('\x00')
+    kwargs['option_rom_version'] = getattr(adapter_attributes, "OptionROMVersion", '').strip('\x00')
     port = Port()
     for key, value in kwargs.items():
         port[key] = value
