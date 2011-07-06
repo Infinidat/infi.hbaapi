@@ -116,14 +116,18 @@ class HbaApi(Generator):
     @contextmanager
     def hbaapi_library(self):
         c_api.HBA_LoadLibrary()
-        yield
-        c_api.HBA_FreeLibrary()
+        try:
+            yield
+        finally:
+            c_api.HBA_FreeLibrary()
 
     @contextmanager
     def hbaapi_adapter(self, adapter_name):
         handle = c_api.HBA_OpenAdapter(adapter_name)
-        yield handle
-        c_api.HBA_CloseAdapter(handle)
+        try:
+            yield handle
+        finally:
+            c_api.HBA_CloseAdapter(handle)
 
 def translate_wwn(source):
     return ':'.join([hex(item).lstrip('0x').zfill(2) for item in source])
