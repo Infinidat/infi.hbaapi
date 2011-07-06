@@ -163,19 +163,6 @@ class HBA_GetDiscoveredPortAttributes(HbaApiFunction):
                 (headers.HBA_UINT32, IN, 'discoveredPortIndex'),
                 (ctypes.c_void_p, IN_OUT, 'portAttributes'))
 
-class HBA_GetAdapterPortAttributes(HbaApiFunction):
-    return_value = headers.HBA_STATUS
-
-    @classmethod
-    def get_errcheck(cls):
-        return errcheck_inconsistency(errcheck_not_supported)
-
-    @classmethod
-    def get_parameters(cls):
-        return ((headers.HBA_HANDLE, IN, 'handle'),
-                (headers.HBA_UINT32, IN, 'portIndex'),
-                (ctypes.c_void_p, IN_OUT, 'portStatistics'))
-
 class HBA_GetPortStatistics(HbaApiFunction):
     return_value = headers.HBA_STATUS
 
