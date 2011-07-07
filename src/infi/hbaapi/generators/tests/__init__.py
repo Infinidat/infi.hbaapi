@@ -15,6 +15,7 @@ class EmptyGenerator(Generator):
     def is_available(cls):
         return True
 
+    @classmethod
     def iter_ports(cls):
         for nothing in []:
             yield
