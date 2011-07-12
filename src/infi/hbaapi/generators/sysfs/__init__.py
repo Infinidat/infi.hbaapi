@@ -10,9 +10,10 @@ from glob import glob
 from os.path import exists, join, sep, relpath
 
 ROOT_FS = sep
+OVERFLOW = '0xffffffffffffffff'
+UNKNOWN_WWN = '0xffffffff'
 
 def translate_stat_value_to_number(stat_value):
-    OVERFLOW = '0xffffffffffffffff'
     return stat_value if isinstance(stat_value, int) else -1 if stat_value == OVERFLOW else int(stat_value, 16)
 
 def translate_wwn(source_wwn):
@@ -20,8 +21,6 @@ def translate_wwn(source_wwn):
     """
     import re
     from ... import WWN_PATTERN
-    dest_wwn = ''
-    UNKNOWN_WWN = '0xffffffff'
     return re.sub(WWN_PATTERN, r'\1:\2:\3:\4:\5:\6:\7:\8',
                   source_wwn if source_wwn != UNKNOWN_WWN else ':'.join(['ff'] * 8)).lower()
 
@@ -43,12 +42,14 @@ def translate_port_type(source):
     lower = source.lower()
     return None if lower in ['unknown' , 'other', 'not present'] else lower
 
+FC_HOST_BASEPATH = join(ROOT_FS, 'sys', 'class', 'fc_host')
+SCSI_HOST_BASEPATH = join(ROOT_FS, 'sys', 'class', 'scsi_host')
+
 class Sysfs(Generator):
     def __init__(self):
         Generator.__init__(self)
 
     def _iter_fc_hosts(self):
-        FC_HOST_BASEPATH = join(ROOT_FS, 'sys', 'class', 'fc_host')
         for path in glob(join(FC_HOST_BASEPATH, 'host*')):
             yield path, relpath(path, FC_HOST_BASEPATH).replace('host', '')
 
@@ -113,8 +114,6 @@ class Sysfs(Generator):
             port.discovered_ports.append(remote_port)
 
     def iter_ports(self):
-        SCSI_HOST_BASEPATH = join(ROOT_FS, 'sys', 'class', 'scsi_host')
-
         for fc_host_path, host_id in self._iter_fc_hosts():
             # fc_host_path is full path
             scsi_host_path = join(SCSI_HOST_BASEPATH, 'host%s' % host_id)
@@ -127,7 +126,4 @@ class Sysfs(Generator):
 
     @classmethod
     def is_available(cls):
-        from os.path import join
-        FC_HOST_BASEPATH = join(ROOT_FS, 'sys', 'class', 'fc_host')
-        from os.path import exists, join, sep
         return exists(FC_HOST_BASEPATH)

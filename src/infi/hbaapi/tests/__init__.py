@@ -3,6 +3,8 @@ import unittest
 import mock
 import logging
 
+#pylint: disable-all
+
 class MockGenerator(object):
     def __init__(self):
         object.__init__(self)

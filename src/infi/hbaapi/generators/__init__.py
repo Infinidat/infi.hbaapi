@@ -28,7 +28,7 @@ class CompositeGenerator(Generator):
         if generator not in self._children:
             self._children.append(generator)
 
-    def remove_generator(selfs, generator):
+    def remove_generator(self, generator):
         self._children.remove(generator)
 
     def iter_generators(self):

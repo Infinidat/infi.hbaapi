@@ -1,4 +1,4 @@
-from infi.hbaapi import Port, PortStatistics
+from infi.hbaapi import Port
 import json
 example = json.loads(""" [
     {

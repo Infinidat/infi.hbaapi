@@ -1,5 +1,7 @@
 __import__("pkg_resources").declare_namespace(__name__)
 
+#pylint: disable-all
+
 import unittest
 import mock
 

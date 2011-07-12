@@ -4,7 +4,7 @@ import glob
 import sys
 from . import headers
 from infi.crap import WrappedFunction, get_os_name, errcheck_zero, errcheck_nonzero, errcheck_nothing
-from infi.crap import IN, OUT, IN_OUT
+from infi.crap import IN, IN_OUT
 
 HBAAPI_SHARED_LIBRARY_FILENAMES = {
     'windows': 'hbaapi.dll',
@@ -45,7 +45,7 @@ class HbaApiFunction(WrappedFunction):
 
 # Library Control Functions
 
-class HBA_GetVersion(HbaApiFunction):
+class HBA_GetVersion(HbaApiFunction): #pylint: disable-msg=C0103
     return_value = headers.HBA_UINT32
 
     @classmethod
@@ -56,21 +56,21 @@ class HBA_GetVersion(HbaApiFunction):
     def get_parameters(cls):
         return ()
 
-class HBA_LoadLibrary(HbaApiFunction):
+class HBA_LoadLibrary(HbaApiFunction): #pylint: disable-msg=C0103
     return_value = headers.HBA_STATUS
 
     @classmethod
     def get_parameters(cls):
         return ()
 
-class HBA_FreeLibrary(HbaApiFunction):
+class HBA_FreeLibrary(HbaApiFunction): #pylint: disable-msg=C0103
     return_value = headers.HBA_STATUS
 
     @classmethod
     def get_parameters(cls):
         return ()
 
-class HBA_GetNumberOfAdapters(HbaApiFunction):
+class HBA_GetNumberOfAdapters(HbaApiFunction): #pylint: disable-msg=C0103
     return_value = headers.HBA_UINT32
 
     @classmethod
@@ -81,7 +81,7 @@ class HBA_GetNumberOfAdapters(HbaApiFunction):
     def get_parameters(cls):
         return ()
 
-class HBA_RefreshAdapterConfiguration(HbaApiFunction):
+class HBA_RefreshAdapterConfiguration(HbaApiFunction): #pylint: disable-msg=C0103
     @classmethod
     def get_errcheck(cls):
         return errcheck_nothing()
@@ -92,7 +92,7 @@ class HBA_RefreshAdapterConfiguration(HbaApiFunction):
 
 # Adapter and Port Information Functions
 
-class HBA_GetAdapterName(HbaApiFunction):
+class HBA_GetAdapterName(HbaApiFunction): #pylint: disable-msg=C0103
     return_value = headers.HBA_STATUS
 
     @classmethod
@@ -104,7 +104,7 @@ class HBA_GetAdapterName(HbaApiFunction):
         return (headers.UINT32, IN, 'adapterIndex'), \
             (ctypes.POINTER(ctypes.c_char), IN_OUT, 'adapterName')
 
-class HBA_OpenAdapter(HbaApiFunction):
+class HBA_OpenAdapter(HbaApiFunction): #pylint: disable-msg=C0103
     return_value = headers.HBA_HANDLE
 
     @classmethod
@@ -115,7 +115,7 @@ class HBA_OpenAdapter(HbaApiFunction):
     def get_parameters(cls):
         return (ctypes.POINTER(ctypes.c_char), IN, 'adapterName'),
 
-class HBA_CloseAdapter(HbaApiFunction):
+class HBA_CloseAdapter(HbaApiFunction): #pylint: disable-msg=C0103
     @classmethod
     def get_errcheck(cls):
         return errcheck_nothing()
@@ -124,7 +124,7 @@ class HBA_CloseAdapter(HbaApiFunction):
     def get_parameters(cls):
         return (headers.HBA_HANDLE, IN_OUT, 'handle'),
 
-class HBA_GetAdapterAttributes(HbaApiFunction):
+class HBA_GetAdapterAttributes(HbaApiFunction): #pylint: disable-msg=C0103
     return_value = headers.HBA_STATUS
 
     @classmethod
@@ -136,7 +136,7 @@ class HBA_GetAdapterAttributes(HbaApiFunction):
         return ((headers.HBA_HANDLE, IN, 'handle'),
                 (ctypes.c_void_p, IN_OUT, 'adapterAttributes'))
 
-class HBA_GetAdapterPortAttributes(HbaApiFunction):
+class HBA_GetAdapterPortAttributes(HbaApiFunction): #pylint: disable-msg=C0103
     return_value = headers.HBA_STATUS
 
     @classmethod
@@ -149,7 +149,7 @@ class HBA_GetAdapterPortAttributes(HbaApiFunction):
                 (headers.HBA_UINT32, IN, 'portIndex'),
                 (ctypes.c_void_p, IN_OUT, 'portAttributes'))
 
-class HBA_GetDiscoveredPortAttributes(HbaApiFunction):
+class HBA_GetDiscoveredPortAttributes(HbaApiFunction): #pylint: disable-msg=C0103
     return_value = headers.HBA_STATUS
 
     @classmethod
@@ -163,7 +163,7 @@ class HBA_GetDiscoveredPortAttributes(HbaApiFunction):
                 (headers.HBA_UINT32, IN, 'discoveredPortIndex'),
                 (ctypes.c_void_p, IN_OUT, 'portAttributes'))
 
-class HBA_GetPortStatistics(HbaApiFunction):
+class HBA_GetPortStatistics(HbaApiFunction): #pylint: disable-msg=C0103
     return_value = headers.HBA_STATUS
 
     @classmethod
@@ -176,7 +176,7 @@ class HBA_GetPortStatistics(HbaApiFunction):
                 (headers.HBA_UINT32, IN, 'portIndex'),
                 (ctypes.c_void_p, IN_OUT, 'portStatistics'))
 
-class HBA_GetFC4Statistics(HbaApiFunction):
+class HBA_GetFC4Statistics(HbaApiFunction): #pylint: disable-msg=C0103
     return_value = headers.HBA_STATUS
 
     @classmethod

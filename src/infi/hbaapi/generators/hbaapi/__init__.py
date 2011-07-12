@@ -19,21 +19,22 @@ class HbaApi(Generator):
             yield adapter_name
 
     def _get_adapter_attributes(self, adapter_handle):
-        buffer = ctypes.c_buffer(headers.HBA_AdapterAttributes.sizeof())
-        c_api.HBA_GetAdapterAttributes(adapter_handle, buffer)
-        adapter_attributes = headers.HBA_AdapterAttributes.create_instance_from_string(buffer)
+        buff = ctypes.c_buffer(headers.HBA_AdapterAttributes.sizeof()) #pylint: disable-msg=W0622,E1101
+        c_api.HBA_GetAdapterAttributes(adapter_handle, buff)
+        adapter_attributes = headers.HBA_AdapterAttributes.create_instance_from_string(buff) #pylint: disable-msg=E1101
+        c_api.HBA_GetAdapterAttributes(adapter_handle, buff)
         return adapter_attributes
 
     def _get_port_attributes(self, adapter_handle, port_index):
-        buffer = ctypes.c_buffer(headers.HBA_PortAttributes.sizeof())
+        buffer = ctypes.c_buffer(headers.HBA_PortAttributes.sizeof()) #pylint: disable-msg=W0622,E1101
         c_api.HBA_GetAdapterPortAttributes(adapter_handle, port_index, buffer)
-        port_attributes = headers.HBA_PortAttributes.create_instance_from_string(buffer)
+        port_attributes = headers.HBA_PortAttributes.create_instance_from_string(buffer) #pylint: disable-msg=E1101
         return port_attributes
 
     def _get_remote_port_attributes(self, adapter_handle, port_index, remote_port_index):
-        buffer = ctypes.c_buffer(headers.HBA_PortAttributes.sizeof())
-        c_api.HBA_GetDiscoveredPortAttributes(adapter_handle, port_index, remote_port_index, buffer)
-        remote_port_attributes = headers.HBA_PortAttributes.create_instance_from_string(buffer)
+        buff = ctypes.c_buffer(headers.HBA_PortAttributes.sizeof()) #pylint: disable-msg=W0622,E1101
+        c_api.HBA_GetDiscoveredPortAttributes(adapter_handle, port_index, remote_port_index, buff)
+        remote_port_attributes = headers.HBA_PortAttributes.create_instance_from_string(buff) #pylint: disable-msg=E1101
         return remote_port_attributes
 
     def _get_remote_ports(self, adapter_handle, port_index, number_of_remote_ports):
@@ -57,14 +58,14 @@ class HbaApi(Generator):
         port_statistics = PortStatistics()
         hba_port_stats, hba_fc4_stats = None, None
 
-        buffer = ctypes.c_buffer(headers.HBA_PortStatistics.sizeof())
+        buffer = ctypes.c_buffer(headers.HBA_PortStatistics.sizeof()) #pylint: disable-msg=W0622,E1101
         c_api.HBA_GetPortStatistics(adapter_handle, port_index, buffer)
-        hba_port_stats = headers.HBA_PortStatistics.create_instance_from_string(buffer)
+        hba_port_stats = headers.HBA_PortStatistics.create_instance_from_string(buffer) #pylint: disable-msg=E1101
 
         try:
-            buffer = ctypes.c_buffer(headers.HBA_FC4Statistics.sizeof())
+            buffer = ctypes.c_buffer(headers.HBA_FC4Statistics.sizeof()) #pylint: disable-msg=W0622,E1101
             c_api.HBA_GetFC4Statistics(adapter_handle, port_index, buffer)
-            hba_fc4_stats = headers.HBA_FC4Statistics.create_instance_from_string(buffer)
+            hba_fc4_stats = headers.HBA_FC4Statistics.create_instance_from_string(buffer) #pylint: disable-msg=E1101
         except NotImplementedError:
             # some HBAs do not have these statistics
             pass
@@ -107,7 +108,7 @@ class HbaApi(Generator):
     @classmethod
     def is_available(cls):
         try:
-            c_api.HBA_GetVersion._get_function()
+            c_api.HBA_GetVersion._get_function() #pylint: disable-msg=W0212,E1101 
             return True
         except OSError:
             pass

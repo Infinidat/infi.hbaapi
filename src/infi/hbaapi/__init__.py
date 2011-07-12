@@ -10,7 +10,8 @@ Under the exmaples module, you can find some real-life examples of the outputs o
 The specific attirbutes available for each port are listed in FC_PORT_ATTRIBUTES
 Their format or expected values are not documented here at this point. However, you can find this out by reading
 the PortAssertions class in the tests modules
-"""
+""" #pylint: disable-msg=W0105
+
 
 from bunch import Bunch
 
@@ -41,29 +42,29 @@ class Port(Bunch):
 
     def _set_defaults(self):
         for attribute in FC_PORT_ATTRIBUTES:
-            self.__setitem__(attribute, None)
-        self.__setitem__('discovered_ports', list())
-        self.__setitem__('statistics', PortStatistics())
+            self.__setitem__(attribute, None) #pylint: disable-msg=E1101
+        self.__setitem__('discovered_ports', list()) #pylint: disable-msg=E1101
+        self.__setitem__('statistics', PortStatistics()) #pylint: disable-msg=E1101
 
     def update_not_none_values(self, other_port):
         for key, value in other_port.iteritems():
-            our_value = self.get(key, None)
+            our_value = self.get(key, None) #pylint: disable-msg=E1101
             if key == 'statistics':
                 continue
             if our_value not in [-1, 0, None, '', [], ]:
                 continue
             if value in [-1, 0, None, '', []]:
                 continue
-            self.__setitem__(key, value)
-        if not other_port.get('statistics'):
+            self.__setitem__(key, value) #pylint: disable-msg=E1101
+        if not other_port.get('statistics'): #pylint: disable-msg=E1101
             return self
-        _ = self.statistics.update_not_none_values(other_port.get('statistics', dict()))
+        _ = self.statistics.update_not_none_values(other_port.get('statistics', dict())) #pylint: disable-msg=E1101
         return self
 
 class PortStatistics(Port):
     def _set_defaults(self):
         for attribute in FC_PORT_STATISTICS:
-            self.__setitem__(attribute, -1)
+            self.__setitem__(attribute, -1) #pylint: disable-msg=E1101
 
 class PortsCollection(object):
     """ The entry point for this module. It provides a generator object trough iter_ports method, which yields Port

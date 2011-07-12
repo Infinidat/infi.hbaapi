@@ -38,7 +38,7 @@ BitsArray = Array('bits', 32, UNInt8)
 PortSupportedFc4Types = Array("PortSupportedFc4Types", 32, UNInt8)
 PortActiveFc4Types = Array("PortActiveFc4Types", 32, UNInt8)
 
-class HBA_AdapterAttributes(Struct):
+class HBA_AdapterAttributes(Struct): #pylint: disable-msg=C0103
     _fields_ = [
                String("Manufacturer", 64),
                String("SerialNumber", 64),
@@ -55,7 +55,7 @@ class HBA_AdapterAttributes(Struct):
                String("DriverName", 256)
                ]
 
-class HBA_PortAttributes(Struct):
+class HBA_PortAttributes(Struct): #pylint: disable-msg=C0103
     _fields_ = [
                 NodeWWN,
                 PortWWN,
@@ -74,7 +74,7 @@ class HBA_PortAttributes(Struct):
                 UNInt32("NumberOfDiscoveredPorts")
                 ]
 
-class HBA_PortStatistics(Struct):
+class HBA_PortStatistics(Struct): #pylint: disable-msg=C0103
     _fields_ = [
                 SNInt64("SecondsSinceLastReset"),
                 SNInt64("TxFrames"),
@@ -93,7 +93,7 @@ class HBA_PortStatistics(Struct):
                 SNInt64("InvalidCRCCount")
                 ]
 
-class HBA_FC4Statistics(Struct):
+class HBA_FC4Statistics(Struct): #pylint: disable-msg=C0103
     _fields_ = [
                SNInt64("InputRequests"),
                SNInt64("OutputRequests"),
