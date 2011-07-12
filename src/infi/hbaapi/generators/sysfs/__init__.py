@@ -42,14 +42,12 @@ def translate_port_type(source):
     lower = source.lower()
     return None if lower in ['unknown' , 'other', 'not present'] else lower
 
-FC_HOST_BASEPATH = join(ROOT_FS, 'sys', 'class', 'fc_host')
-SCSI_HOST_BASEPATH = join(ROOT_FS, 'sys', 'class', 'scsi_host')
-
 class Sysfs(Generator):
     def __init__(self):
         Generator.__init__(self)
 
     def _iter_fc_hosts(self):
+        FC_HOST_BASEPATH = join(ROOT_FS, 'sys', 'class', 'fc_host')
         for path in glob(join(FC_HOST_BASEPATH, 'host*')):
             yield path, relpath(path, FC_HOST_BASEPATH).replace('host', '')
 
@@ -114,6 +112,7 @@ class Sysfs(Generator):
             port.discovered_ports.append(remote_port)
 
     def iter_ports(self):
+        SCSI_HOST_BASEPATH = join(ROOT_FS, 'sys', 'class', 'scsi_host')
         for fc_host_path, host_id in self._iter_fc_hosts():
             # fc_host_path is full path
             scsi_host_path = join(SCSI_HOST_BASEPATH, 'host%s' % host_id)
@@ -126,4 +125,5 @@ class Sysfs(Generator):
 
     @classmethod
     def is_available(cls):
+        FC_HOST_BASEPATH = join(ROOT_FS, 'sys', 'class', 'fc_host')
         return exists(FC_HOST_BASEPATH)
