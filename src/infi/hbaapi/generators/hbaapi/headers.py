@@ -1,14 +1,10 @@
-'''
-Created on Jun 20, 2011
-
-@author: guy
-'''
 
 import ctypes
 from infi.instruct import Struct
 from infi.instruct import FixedSizeArray as Array
 from infi.instruct import FixedSizeString as String
-from infi.instruct import UNInt32, UNInt8, SNInt64
+from infi.instruct import UNInt32, UNInt8, SNInt64, UNInt64
+from infi.instruct import Padding
 
 ##############
 # Data Types #
@@ -37,6 +33,10 @@ BitsArray = Array('bits', 32, UNInt8)
 
 PortSupportedFc4Types = Array("PortSupportedFc4Types", 32, UNInt8)
 PortActiveFc4Types = Array("PortActiveFc4Types", 32, UNInt8)
+
+def is_64bit():
+    from sys import maxsize
+    return maxsize > 2 ** 32
 
 class HBA_AdapterAttributes(Struct): #pylint: disable-msg=C0103
     _fields_ = [
@@ -101,6 +101,28 @@ class HBA_FC4Statistics(Struct): #pylint: disable-msg=C0103
                SNInt64("InputMegabytes"),
                SNInt64("OutputMegabytes")
                ]
+
+class HBA_FcpScsiEntryV2(Struct): #pylint: disablemsg=C0103
+    _fields_ = [
+                String("OSDeviceName", 256),
+                UNInt32("ScsiBusNumber"),
+                UNInt32("ScsiTargetNumber"),
+                UNInt32("ScsiOSLun"),
+                Padding(4),
+                UNInt32("Fcid"),
+                NodeWWN,
+                PortWWN,
+                UNInt64("FcpLun"),
+                String("buffer", 256),
+                Padding(4),
+                ]
+
+class HBA_FCPTargetMappingV2(Struct): #pylint: disablemsg=C0103
+    _fields_ = [
+                UNInt32("NumberOfEntries"),
+                Padding(4),
+                Array("entry", 1, HBA_FcpScsiEntryV2)
+                ]
 
 #############
 # Constants #

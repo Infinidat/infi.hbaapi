@@ -23,8 +23,8 @@ FC_PORT_ATTRIBUTES = ['node_wwn', 'port_wwn', 'port_fcid', 'port_state', 'port_t
                       'port_speed', 'port_max_frame_size', 'fabric_name',
                       'driver_name', 'driver_version', 'manufacturer', 'serial_number',
                       'model', 'model_description', 'hardware_version', 'firmware_version',
-                      'option_rom_version',
-                      'discovered_ports', 'statistics']
+                      'option_rom_version', 'discovered_ports', 'statistics', 'hct']
+# TODO add tests for both sysfs and hbaapi implementations
 
 FC_PORT_STATISTICS = ['dumped_frames', 'error_frames', 'fcp_control_requests', 'fcp_input_megabytes',
                       'fcp_input_requests', 'fcp_output_megabytes', 'fcp_output_requests', 'invalid_crc_count',

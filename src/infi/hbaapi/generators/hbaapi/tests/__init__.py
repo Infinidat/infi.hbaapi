@@ -147,9 +147,6 @@ PORT_STATISTICS_BY_ADAPTER_HANDLE = {2:[dict(
     InvalidCRCCount=0,
 )]}
 
-FCP4_STATISTICS_BY_ADAPTER_HANDLE = {2:[NotImplementedError],
-                                     3:[NotImplementedError]}
-
 class GeneratorTestCase(unittest.TestCase):
     pass
 
@@ -266,12 +263,18 @@ class GeneratorTestCase(unittest.TestCase):
     @contextmanager
     def _mock_get_fcp4_statistics(self):
         def side_effect(*args, **kwargs):
-            adapter_handle, port_index, buffer = args
-            attributes = FCP4_STATISTICS_BY_ADAPTER_HANDLE[adapter_handle.value][port_index]
-            if attributes is NotImplementedError:
-                raise NotImplementedError
-            return 0
+            from ..headers import HBA_STATUS_ERROR_UNSUPPORTED_FC4
+            return HBA_STATUS_ERROR_UNSUPPORTED_FC4
         with mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_GetFC4Statistics") as api_mock:
+            api_mock.side_effect = side_effect
+            yield api_mock
+
+    @contextmanager
+    def _mock_get_fcp_target_mappings(self):
+        def side_effect(*args, **kwargs):
+            from ..headers import HBA_STATUS_ERROR_NOT_SUPPORTED
+            return HBA_STATUS_ERROR_NOT_SUPPORTED
+        with mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_GetFcpTargetMappingV2") as api_mock:
             api_mock.side_effect = side_effect
             yield api_mock
 
@@ -308,6 +311,7 @@ class GeneratorTestCase(unittest.TestCase):
                     self._mock_get_port_statistics(),
                     self._mock_get_fcp4_statistics(),
                     self._mock_get_remote_port_attributes(),
+                    self._mock_get_fcp_target_mappings(),
                     ):
             ports = self._get_ports()
             from infi.hbaapi.tests import PortAssertions
@@ -331,7 +335,8 @@ class GeneratorTestCase(unittest.TestCase):
                     self._mock_get_port_attributes(),
                     self._mock_get_port_statistics(),
                     self._mock_get_fcp4_statistics(),
-                    self._mock_get_remote_port_attributes()
+                    self._mock_get_remote_port_attributes(),
+                    self._mock_get_fcp_target_mappings()
                     ):
             self.assertRaises(c_api.InconsistencyError, self._get_ports)
 
