@@ -41,6 +41,8 @@ def translate_port_speed(source):
     return int(source.replace(' Gbit', ''))
 
 def translate_port_state(source):
+    if source == -1:
+        return None
     lower = source.lower()
     return None if lower in ['unknown', ] else lower
 
