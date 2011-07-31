@@ -19,20 +19,20 @@ class HbaApi(Generator):
             yield adapter_name
 
     def _get_adapter_attributes(self, adapter_handle):
-        buff = ctypes.c_buffer(headers.HBA_AdapterAttributes.sizeof()) #pylint: disable-msg=W0622,E1101
+        buff = ctypes.c_buffer(headers.HBA_AdapterAttributes.min_max_sizeof().max) #pylint: disable-msg=W0622,E1101
         c_api.HBA_GetAdapterAttributes(adapter_handle, buff)
         adapter_attributes = headers.HBA_AdapterAttributes.create_instance_from_string(buff) #pylint: disable-msg=E1101
         c_api.HBA_GetAdapterAttributes(adapter_handle, buff)
         return adapter_attributes
 
     def _get_port_attributes(self, adapter_handle, port_index):
-        buffer = ctypes.c_buffer(headers.HBA_PortAttributes.sizeof()) #pylint: disable-msg=W0622,E1101
+        buffer = ctypes.c_buffer(headers.HBA_PortAttributes.min_max_sizeof().max) #pylint: disable-msg=W0622,E1101
         c_api.HBA_GetAdapterPortAttributes(adapter_handle, port_index, buffer)
         port_attributes = headers.HBA_PortAttributes.create_instance_from_string(buffer) #pylint: disable-msg=E1101
         return port_attributes
 
     def _get_remote_port_attributes(self, adapter_handle, port_index, remote_port_index):
-        buff = ctypes.c_buffer(headers.HBA_PortAttributes.sizeof()) #pylint: disable-msg=W0622,E1101
+        buff = ctypes.c_buffer(headers.HBA_PortAttributes.min_max_sizeof().max) #pylint: disable-msg=W0622,E1101
         c_api.HBA_GetDiscoveredPortAttributes(adapter_handle, port_index, remote_port_index, buff)
         remote_port_attributes = headers.HBA_PortAttributes.create_instance_from_string(buff) #pylint: disable-msg=E1101
         return remote_port_attributes
@@ -71,12 +71,12 @@ class HbaApi(Generator):
         port_statistics = PortStatistics()
         hba_port_stats, hba_fc4_stats = None, None
 
-        buffer = ctypes.c_buffer(headers.HBA_PortStatistics.sizeof()) #pylint: disable-msg=W0622,E1101
+        buffer = ctypes.c_buffer(headers.HBA_PortStatistics.min_max_sizeof().max) #pylint: disable-msg=W0622,E1101
         c_api.HBA_GetPortStatistics(adapter_handle, port_index, buffer)
         hba_port_stats = headers.HBA_PortStatistics.create_instance_from_string(buffer) #pylint: disable-msg=E1101
 
         try:
-            buffer = ctypes.c_buffer(headers.HBA_FC4Statistics.sizeof()) #pylint: disable-msg=W0622,E1101
+            buffer = ctypes.c_buffer(headers.HBA_FC4Statistics.min_max_sizeof().max) #pylint: disable-msg=W0622,E1101
             c_api.HBA_GetFC4Statistics(adapter_handle, wwn_buffer, 2, buffer)
             hba_fc4_stats = headers.HBA_FC4Statistics.create_instance_from_string(buffer) #pylint: disable-msg=E1101
         except NotImplementedError:
@@ -119,7 +119,7 @@ class HbaApi(Generator):
         return result
 
     def _get_local_port_mappings_count(self, adapter_handle, wwn_buffer):
-        mapping_buffer = ctypes.c_buffer(headers.HBA_FCPTargetMappingV2.sizeof())
+        mapping_buffer = ctypes.c_buffer(headers.HBA_FCPTargetMappingV2.min_max_sizeof().max)
         try:
             c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, mapping_buffer)
         except RuntimeError, exception:
@@ -151,9 +151,9 @@ class HbaApi(Generator):
                     headers.Array("entries", number_of_entries + 1, headers.HBA_FcpScsiEntryV2)
                     ]
 
-	mappings = HBA_FCPTargetMapping.create_instance_from_string('\x00' * HBA_FCPTargetMapping.sizeof())
+	mappings = HBA_FCPTargetMapping.create_instance_from_string('\x00' * HBA_FCPTargetMapping.min_max_sizeof().max)
 	mappings.NumberOfEntries = number_of_entries + 1
-        mapping_buffer = ctypes.c_buffer(HBA_FCPTargetMapping.instance_to_string(mappings), HBA_FCPTargetMapping.sizeof())
+        mapping_buffer = ctypes.c_buffer(HBA_FCPTargetMapping.instance_to_string(mappings), HBA_FCPTargetMapping.min_max_sizeof().max)
         c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, mapping_buffer)
         mappings = HBA_FCPTargetMapping.create_instance_from_string(mapping_buffer)
         return self._mappings_to_dict(mappings)
