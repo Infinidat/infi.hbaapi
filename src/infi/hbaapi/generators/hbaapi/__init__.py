@@ -151,8 +151,8 @@ class HbaApi(Generator):
                     headers.Array("entries", number_of_entries + 1, headers.HBA_FcpScsiEntryV2)
                     ]
 
-	mappings = HBA_FCPTargetMapping.create_instance_from_string('\x00' * HBA_FCPTargetMapping.min_max_sizeof().max)
-	mappings.NumberOfEntries = number_of_entries + 1
+        mappings = HBA_FCPTargetMapping.create_instance_from_string('\x00' * HBA_FCPTargetMapping.min_max_sizeof().max)
+        mappings.NumberOfEntries = number_of_entries + 1
         mapping_buffer = ctypes.c_buffer(HBA_FCPTargetMapping.instance_to_string(mappings), HBA_FCPTargetMapping.min_max_sizeof().max)
         c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, mapping_buffer)
         mappings = HBA_FCPTargetMapping.create_instance_from_string(mapping_buffer)
