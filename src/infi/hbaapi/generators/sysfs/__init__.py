@@ -111,7 +111,7 @@ class Sysfs(Generator):
 
     def _populate_local_port_hct(self, port, base_path):
         from re import compile
-        pattern = compile(r"(?P<host>\d+)$")
+        pattern = compile(r"host(?P<host>\d+)")
         result = pattern.search(base_path).groupdict()
         port.hct = (int(result['host']), -1, -1)
 
