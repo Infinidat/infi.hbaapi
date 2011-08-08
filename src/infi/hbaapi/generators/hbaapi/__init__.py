@@ -52,11 +52,11 @@ class HbaApi(Generator):
 
     def _get_local_port(self, adapter_handle, adapter_attributes, port_index):
         port_attributes = self._get_port_attributes(adapter_handle, port_index)
-	wwn_buffer = self._extract_wwn_buffer_from_port_attributes(port_attributes)
+        wwn_buffer = self._extract_wwn_buffer_from_port_attributes(port_attributes)
         number_of_remote_ports = port_attributes.NumberOfDiscoveredPorts
         remote_ports = self._get_remote_ports(adapter_handle, port_index, number_of_remote_ports)
         port_statistics = self._get_local_port_statistics(adapter_handle, port_index, wwn_buffer)
-	port_mappings = self._get_local_port_mappings(adapter_handle, wwn_buffer)
+        port_mappings = self._get_local_port_mappings(adapter_handle, wwn_buffer)
         port = get_port_object(adapter_attributes, port_attributes)
         port.discovered_ports = remote_ports
         port.statistics = port_statistics
