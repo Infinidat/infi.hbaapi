@@ -198,7 +198,8 @@ class HbaApi(Generator):
             c_api.HBA_CloseAdapter(handle)
 
 def translate_wwn(source):
-    return ':'.join([hex(item).lstrip('0x').zfill(2) for item in source])
+    from infi.dtypes.wwn import WWN
+    return WWN(':'.join([hex(item).lstrip('0x').zfill(2) for item in source]))
 
 def translate_port_speed(source):
     """ PortSpeed indicates the signalling bit rate at which this port is currently operating.

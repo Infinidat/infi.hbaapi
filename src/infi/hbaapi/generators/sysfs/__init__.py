@@ -21,10 +21,11 @@ def translate_wwn(source_wwn):
     """
     import re
     from ... import WWN_PATTERN
+    from infi.dtypes.wwn import WWN
     if source_wwn == -1:
         return None
-    return re.sub(WWN_PATTERN, r'\1:\2:\3:\4:\5:\6:\7:\8',
-                  source_wwn if source_wwn != UNKNOWN_WWN else ':'.join(['ff'] * 8)).lower()
+    return WWN(re.sub(WWN_PATTERN, r'\1:\2:\3:\4:\5:\6:\7:\8',
+                  source_wwn if source_wwn != UNKNOWN_WWN else ':'.join(['ff'] * 8)).lower())
 
 def translate_supported_speeds(source):
     """ this functions traslates ''1 Gbit, 2 Gbit, 4 Gbit, 8 Gbit' to [1,2,4,8]

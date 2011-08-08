@@ -32,7 +32,7 @@ class GeneratorTestCase(unittest.TestCase):
             port_test_class.assert_port(port)
 
     def _assert_wwn_translation(self, expected, actual):
-        self.assertEquals(expected, sysfs.translate_wwn(actual))
+        self.assertEquals(sysfs.translate_wwn(actual), expected)
 
     def test_wwn_translation(self):
         for expected, actual in [('01:02:03:04:05:06:07:08', '01:02:03:04:05:06:07:08'),
