@@ -57,10 +57,11 @@ class PortAssertions(object):
 
     def _assert_wwn(self, wwn):
         import re
+        from infi.dtypes.wwn import WWN
         from .. import WWN_PATTERN
         logging.debug(wwn)
         self.test_case.assertIsNotNone(wwn)
-        self.test_case.assertIsNotNone(re.match(WWN_PATTERN, wwn), '%s is not a formatted wwn' % (repr(wwn)))
+        self.test_case.assertIsInstance(wwn, WWN)
 
     def _assert_supported_speeds(self, port):
         self.test_case.assertIsInstance(port.port_supported_speeds, list)
