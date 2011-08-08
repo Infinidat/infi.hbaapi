@@ -10,9 +10,10 @@ from glob import glob
 from os.path import exists, join, sep, relpath
 
 ROOT_FS = sep
+OVERFLOW = '0xffffffffffffffff'
+UNKNOWN_WWN = '0xffffffff'
 
 def translate_stat_value_to_number(stat_value):
-    OVERFLOW = '0xffffffffffffffff'
     return stat_value if isinstance(stat_value, int) else -1 if stat_value == OVERFLOW else int(stat_value, 16)
 
 def translate_wwn(source_wwn):
@@ -20,27 +21,36 @@ def translate_wwn(source_wwn):
     """
     import re
     from ... import WWN_PATTERN
-    dest_wwn = ''
-    UNKNOWN_WWN = '0xffffffff'
-    return re.sub(WWN_PATTERN, r'\1:\2:\3:\4:\5:\6:\7:\8',
-                  source_wwn if source_wwn != UNKNOWN_WWN else ':'.join(['ff'] * 8)).lower()
+    from infi.dtypes.wwn import WWN
+    if source_wwn == -1:
+        return None
+    return WWN(re.sub(WWN_PATTERN, r'\1:\2:\3:\4:\5:\6:\7:\8',
+                  source_wwn if source_wwn != UNKNOWN_WWN else ':'.join(['ff'] * 8)).lower())
 
 def translate_supported_speeds(source):
     """ this functions traslates ''1 Gbit, 2 Gbit, 4 Gbit, 8 Gbit' to [1,2,4,8]
     """
+    if source == -1:
+        return None
     return [int(item.replace(' Gbit', '')) for item in source.split(',')]
 
 def translate_port_speed(source):
+    if source == -1:
+        return 0
     if source.lower() == 'unknown':
         return 0
     return int(source.replace(' Gbit', ''))
 
 def translate_port_state(source):
+    if source == -1:
+        return None
     lower = source.lower()
     return None if lower in ['unknown', ] else lower
 
 def translate_port_type(source):
-    lower = source.lower()
+    if source == -1:
+        return None
+    lower = source.lower().strip()
     return None if lower in ['unknown' , 'other', 'not present'] else lower
 
 class Sysfs(Generator):
@@ -84,6 +94,7 @@ class Sysfs(Generator):
                                                 self.get_file_content(join(base_path, 'supported_speeds')))
         port.fabric_name = translate_wwn(self.get_file_content(join(base_path, 'fabric_name')))
         port.port_symbolic_name = self.get_file_content(join(base_path, 'symbolic_name'))
+	self._populate_local_port_hct(port, base_path)
 
     def _populate_port_attributes_from_scsi_host(self, port, base_path):
         port.model = self.get_file_content(join(base_path, 'model_name'))
@@ -93,8 +104,21 @@ class Sysfs(Generator):
         port.hardware_version = self.get_file_content(join(base_path, 'fw_version'))
         port.option_rom_version = self.get_file_content(join(base_path, 'optrom_fw_version'))
 
-    def _populate_remote_port_attributes_from_fc_host(self, port, base_path):
+    def _populate_remote_port_hct(self, port, base_path, local_port):
+        from re import compile
+        pattern = compile(r"(?P<host>\d+)[^\d](?P<channel>\d+)[^\d](?P<target>\d)")
+        result = pattern.search(base_path).groupdict()
+        port.hct = (local_port.hct[0], int(result['channel']), int(result['target']))
+
+    def _populate_local_port_hct(self, port, base_path):
+        from re import compile
+        pattern = compile(r"host(?P<host>\d+)")
+        result = pattern.search(base_path).groupdict()
+        port.hct = (int(result['host']), -1, -1)
+
+    def _populate_remote_port_attributes_from_fc_host(self, port, base_path, local_port):
         self._populate_port_attributes_from_fc_host(port, base_path)
+        self._populate_remote_port_hct(port, base_path, local_port)
 
     def _populate_port_statistics_from_fc_host(self, port, base_path):
         # currently, FC_PORT_STATISTICS match the files in sysfs, so its easy to this
@@ -109,25 +133,22 @@ class Sysfs(Generator):
         port.discovered_ports = []
         for remote_fc_port_path in self._iter_remote_fc_ports(fc_host_path):
             remote_port = Port()
-            self._populate_remote_port_attributes_from_fc_host(remote_port, remote_fc_port_path)
+            self._populate_remote_port_attributes_from_fc_host(remote_port, remote_fc_port_path, port)
             port.discovered_ports.append(remote_port)
 
     def iter_ports(self):
         SCSI_HOST_BASEPATH = join(ROOT_FS, 'sys', 'class', 'scsi_host')
-
         for fc_host_path, host_id in self._iter_fc_hosts():
             # fc_host_path is full path
             scsi_host_path = join(SCSI_HOST_BASEPATH, 'host%s' % host_id)
             port = Port()
-            self._populate_remote_port_attributes_from_fc_host(port, fc_host_path)
             self._populate_port_attributes_from_fc_host(port, fc_host_path)
             self._populate_port_attributes_from_scsi_host(port, scsi_host_path)
             self._populate_port_statistics_from_fc_host(port, fc_host_path)
+            self._populate_discovered_ports(port, fc_host_path)
             yield port
 
     @classmethod
     def is_available(cls):
-        from os.path import join
         FC_HOST_BASEPATH = join(ROOT_FS, 'sys', 'class', 'fc_host')
-        from os.path import exists, join, sep
         return exists(FC_HOST_BASEPATH)

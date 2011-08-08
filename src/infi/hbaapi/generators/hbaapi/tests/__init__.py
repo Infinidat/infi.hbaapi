@@ -1,10 +1,11 @@
 __import__("pkg_resources").declare_namespace(__name__)
 
+#pylint: disable-all
+
 import logging
 import unittest
 import mock
 from contextlib import contextmanager, nested
-from construct import Container
 from os.path import exists, join, sep, dirname, pardir, abspath
 from ... import hbaapi
 from .. import headers, c_api
@@ -12,12 +13,12 @@ from .. import headers, c_api
 ADAPTER_NAMES = ['lsiSAS', 'qlogic1', 'qlogic2']
 ADAPTER_HANDLES = {'lsiSAS': 1, 'qlogic1': 2, 'qlogic2': 3}
 ADAPTER_ATTRIBUTES_BY_HANDLE = {1: NotImplementedError,
-                                2: Container(
+                                2: dict(
     Manufacturer='QLogic Corporation',
     SerialNumber='I48461',
     Model='QLE2562',
     ModelDescription='QLogic QLE2562 Fibre Channel Adapter',
-    NodeWWN=Container(wwn=[32, 0, 0, 36, 255, 44, 77, 242, ]),
+    NodeWWN=[32, 0, 0, 36, 255, 44, 77, 242, ],
     NodeSymbolicName='QLE2562 FW:v4.06.01 DVR:v9.1.8.6',
     HardwareVersion='',
     DriverVersion='9.1.8.6',
@@ -26,12 +27,12 @@ ADAPTER_ATTRIBUTES_BY_HANDLE = {1: NotImplementedError,
     VendorSpecificID=624038007,
     NumberOfPorts=1,
     DriverName='ql2300.sys',),
-                                3: Container(
+                                3: dict(
     Manufacturer='QLogic Corporation',
     SerialNumber='I48717',
     Model='QLE2562',
     ModelDescription='QLogic QLE2562 Fibre Channel Adapter',
-    NodeWWN=Container(wwn=[32, 0, 0, 36, 255, 44, 77, 243, ]),
+    NodeWWN=[32, 0, 0, 36, 255, 44, 77, 243, ],
     NodeSymbolicName='QLE2562 FW:v4.06.01 DVR:v9.1.8.6',
     HardwareVersion='',
     DriverVersion='9.1.8.6',
@@ -42,76 +43,76 @@ ADAPTER_ATTRIBUTES_BY_HANDLE = {1: NotImplementedError,
     DriverName='ql2300.sys',
 )}
 
-PORT_ATTRIBUTES_BY_ADAPTER_HANDLE = {2:[Container(
-    NodeWWN=Container(wwn=[32, 0, 0, 36, 255, 44, 77, 242, ]),
-    PortWWN=Container(wwn=[33, 0, 0, 36, 255, 44, 77, 242, ]),
+PORT_ATTRIBUTES_BY_ADAPTER_HANDLE = {2:[dict(
+    NodeWWN=[32, 0, 0, 36, 255, 44, 77, 242, ],
+    PortWWN=[33, 0, 0, 36, 255, 44, 77, 242, ],
     PortFcId=0,
     PortType=1,
     PortState=6,
     PortSupportedClassofService=8,
-    PortSupportedFc4Types=Container(bits=[0] * 32),
-    PortActiveFc4Types=Container(bits=[0] * 32),
+    PortSupportedFc4Types=[0] * 32,
+    PortActiveFc4Types=[0] * 32,
     PortSymbolicName='',
     OSDeviceName='\\\\.\\Scsi3:',
     PortSuggestedSpeed=26,
     PortSpeed=0,
     PortMaxFrameSize=2048,
-    FabricName=Container(wwn=[0, 0, 0, 0, 0, 0, 0, 0]),
+    FabricName=[0, 0, 0, 0, 0, 0, 0, 0],
     NumberOfDiscoveredPorts=1,),
                                         ],
-                                     3:[Container(
-    NodeWWN=Container(wwn=[32, 0, 0, 36, 255, 44, 77, 243, ]),
-    PortWWN=Container(wwn=[33, 0, 0, 36, 255, 44, 77, 243, ]),
+                                     3:[dict(
+    NodeWWN=[32, 0, 0, 36, 255, 44, 77, 243, ],
+    PortWWN=[33, 0, 0, 36, 255, 44, 77, 243, ],
     PortFcId=0,
     PortType=1,
     PortState=6,
     PortSupportedClassofService=8,
-    PortSupportedFc4Types=Container(bits=[0] * 32),
-    PortActiveFc4Types=Container(bits=[0] * 32),
+    PortSupportedFc4Types=[0] * 32,
+    PortActiveFc4Types=[0] * 32,
     PortSymbolicName='',
     OSDeviceName='\\\\.\\Scsi3:',
     PortSuggestedSpeed=26,
     PortSpeed=0,
     PortMaxFrameSize=2048,
-    FabricName=Container(wwn=[0, 0, 0, 0, 0, 0, 0, 0]),
+    FabricName=[0, 0, 0, 0, 0, 0, 0, 0],
     NumberOfDiscoveredPorts=1,),
                                         ]}
 
 REMOTE_PORT_ATTRIBUTES = {
-    2: [[Container(
-    NodeWWN=Container(wwn=[1, 2, 3, 4, 5, 6, 7, 8]),
-    PortWWN=Container(wwn=[1, 2, 3, 4, 5, 6, 7, 8]),
+    2: [[dict(
+    NodeWWN=[1, 2, 3, 4, 5, 6, 7, 8],
+    PortWWN=[1, 2, 3, 4, 5, 6, 7, 8],
     PortFcId=123,
     PortType=0,
     PortState=1,
     PortSupportedClassofService=0,
-    PortSupportedFc4Types=Container(bits=[0] * 32),
-    PortActiveFc4Types=Container(bits=[0] * 32),
+    PortSupportedFc4Types=[0] * 32,
+    PortActiveFc4Types=[0] * 32,
     PortSymbolicName='',
     OSDeviceName='',
     PortSuggestedSpeed=0,
     PortSpeed=0,
     PortMaxFrameSize=0,
-    FabricName=Container(wwn=[0] * 8),
+    FabricName=[0] * 8,
     NumberOfDiscoveredPorts=0,)]],
-    3: [[Container(
-    NodeWWN=Container(wwn=[1, 2, 3, 4, 5, 6, 7, 8]),
-    PortWWN=Container(wwn=[1, 2, 3, 4, 5, 6, 7, 8]),
+    3: [[dict(
+    NodeWWN=[1, 2, 3, 4, 5, 6, 7, 8],
+    PortWWN=[1, 2, 3, 4, 5, 6, 7, 8],
     PortFcId=123,
     PortType=0,
     PortState=1,
     PortSupportedClassofService=0,
-    PortSupportedFc4Types=Container(bits=[0] * 32),
-    PortActiveFc4Types=Container(bits=[0] * 32),
+    PortSupportedFc4Types=[0] * 32,
+    PortActiveFc4Types=[0] * 32,
     PortSymbolicName='',
     OSDeviceName='',
     PortSuggestedSpeed=0,
     PortSpeed=0,
     PortMaxFrameSize=0,
-    FabricName=Container(wwn=[0] * 8),
+    FabricName=[0] * 8,
     NumberOfDiscoveredPorts=0,)], ]}
 
-PORT_STATISTICS_BY_ADAPTER_HANDLE = {2:[Container(
+PORT_STATISTICS_BY_ADAPTER_HANDLE = {2:[dict(
     SecondsSinceLastReset= -1,
     TxFrames= -1,
     TxWords= -1,
@@ -128,7 +129,7 @@ PORT_STATISTICS_BY_ADAPTER_HANDLE = {2:[Container(
     InvalidTxWordCount=0,
     InvalidCRCCount=0,
 )],
-                                     3:[Container(
+                                     3:[dict(
     SecondsSinceLastReset= -1,
     TxFrames= -1,
     TxWords= -1,
@@ -145,9 +146,6 @@ PORT_STATISTICS_BY_ADAPTER_HANDLE = {2:[Container(
     InvalidTxWordCount=0,
     InvalidCRCCount=0,
 )]}
-
-FCP4_STATISTICS_BY_ADAPTER_HANDLE = {2:[NotImplementedError],
-                                     3:[NotImplementedError]}
 
 class GeneratorTestCase(unittest.TestCase):
     pass
@@ -205,7 +203,10 @@ class GeneratorTestCase(unittest.TestCase):
             attributes = ADAPTER_ATTRIBUTES_BY_HANDLE[adapter_handle.value]
             if attributes is NotImplementedError:
                 raise NotImplementedError
-            buffer.raw = headers.HBA_AdapterAttributes.build(attributes)
+            instance = headers.HBA_AdapterAttributes.create()
+            for key, value in attributes.items():
+                setattr(instance, key, value)
+            buffer.raw = headers.HBA_AdapterAttributes.instance_to_string(instance)
             return 0
         with mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_GetAdapterAttributes") as api_mock:
             api_mock.side_effect = side_effect
@@ -218,7 +219,10 @@ class GeneratorTestCase(unittest.TestCase):
             attributes = PORT_ATTRIBUTES_BY_ADAPTER_HANDLE[adapter_handle.value][port_index]
             if attributes is NotImplementedError:
                 raise NotImplementedError
-            buffer.raw = headers.HBA_PortAttributes.build(attributes)
+            instance = headers.HBA_PortAttributes.create()
+            for key, value in attributes.items():
+                setattr(instance, key, value)
+            buffer.raw = headers.HBA_PortAttributes.instance_to_string(instance)
             return 0
         with mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_GetAdapterPortAttributes") as api_mock:
             api_mock.side_effect = side_effect
@@ -231,7 +235,10 @@ class GeneratorTestCase(unittest.TestCase):
             attributes = REMOTE_PORT_ATTRIBUTES[adapter_handle.value][port_index][remote_port_index]
             if attributes is NotImplementedError:
                 raise NotImplementedError
-            buffer.raw = headers.HBA_PortAttributes.build(attributes)
+            instance = headers.HBA_PortAttributes.create()
+            for key, value in attributes.items():
+                setattr(instance, key, value)
+            buffer.raw = headers.HBA_PortAttributes.instance_to_string(instance)
             return 0
         with mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_GetDiscoveredPortAttributes") as api_mock:
             api_mock.side_effect = side_effect
@@ -244,7 +251,10 @@ class GeneratorTestCase(unittest.TestCase):
             attributes = PORT_STATISTICS_BY_ADAPTER_HANDLE[adapter_handle.value][port_index]
             if attributes is NotImplementedError:
                 raise NotImplementedError
-            buffer.raw = headers.HBA_PortStatistics.build(attributes)
+            instance = headers.HBA_PortStatistics.create()
+            for key, value in attributes.items():
+                setattr(instance, key, value)
+            buffer.raw = headers.HBA_PortStatistics.instance_to_string(instance)
             return 0
         with mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_GetPortStatistics") as api_mock:
             api_mock.side_effect = side_effect
@@ -253,13 +263,18 @@ class GeneratorTestCase(unittest.TestCase):
     @contextmanager
     def _mock_get_fcp4_statistics(self):
         def side_effect(*args, **kwargs):
-            adapter_handle, port_index, buffer = args
-            attributes = FCP4_STATISTICS_BY_ADAPTER_HANDLE[adapter_handle.value][port_index]
-            if attributes is NotImplementedError:
-                raise NotImplementedError
-            buffer.raw = headers.HBA_GetFC4Statistics.build(attributes)
-            return 0
+            from ..headers import HBA_STATUS_ERROR_UNSUPPORTED_FC4
+            return HBA_STATUS_ERROR_UNSUPPORTED_FC4
         with mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_GetFC4Statistics") as api_mock:
+            api_mock.side_effect = side_effect
+            yield api_mock
+
+    @contextmanager
+    def _mock_get_fcp_target_mappings(self):
+        def side_effect(*args, **kwargs):
+            from ..headers import HBA_STATUS_ERROR_NOT_SUPPORTED
+            return HBA_STATUS_ERROR_NOT_SUPPORTED
+        with mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_GetFcpTargetMappingV2") as api_mock:
             api_mock.side_effect = side_effect
             yield api_mock
 
@@ -296,6 +311,7 @@ class GeneratorTestCase(unittest.TestCase):
                     self._mock_get_port_statistics(),
                     self._mock_get_fcp4_statistics(),
                     self._mock_get_remote_port_attributes(),
+                    self._mock_get_fcp_target_mappings(),
                     ):
             ports = self._get_ports()
             from infi.hbaapi.tests import PortAssertions
@@ -319,7 +335,8 @@ class GeneratorTestCase(unittest.TestCase):
                     self._mock_get_port_attributes(),
                     self._mock_get_port_statistics(),
                     self._mock_get_fcp4_statistics(),
-                    self._mock_get_remote_port_attributes()
+                    self._mock_get_remote_port_attributes(),
+                    self._mock_get_fcp_target_mappings()
                     ):
             self.assertRaises(c_api.InconsistencyError, self._get_ports)
 

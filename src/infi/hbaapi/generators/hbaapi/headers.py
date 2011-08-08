@@ -1,11 +1,11 @@
-'''
-Created on Jun 20, 2011
-
-@author: guy
-'''
 
 import ctypes
-from construct import Struct, String, UNInt32, UNInt8, Array, SNInt64
+from infi.instruct import Struct
+from infi.instruct import FixedSizeArray as Array
+from infi.instruct import FixedSizeString as String
+from infi.instruct import UNInt32, UNInt8, SNInt64, UNInt64
+from infi.instruct import Padding
+
 ##############
 # Data Types #
 ##############
@@ -26,76 +26,103 @@ HBA_COS = HBA_UINT32
 # Structures #
 ##############
 
-NodeWWN = Struct("NodeWWN",
-                 Array(8, UNInt8("wwn")))
+NodeWWN = Array("NodeWWN", 8, UNInt8)
+PortWWN = Array("PortWWN", 8, UNInt8)
+FabricName = Array("FabricName", 8, UNInt8)
+BitsArray = Array('bits', 32, UNInt8)
 
-PortWWN = Struct("PortWWN",
-                 Array(8, UNInt8("wwn")))
+PortSupportedFc4Types = Array("PortSupportedFc4Types", 32, UNInt8)
+PortActiveFc4Types = Array("PortActiveFc4Types", 32, UNInt8)
 
-FabricName = Struct("FabricName",
-                 Array(8, UNInt8("wwn")))
+def is_64bit():
+    from sys import maxsize
+    return maxsize > 2 ** 32
 
-PortSupportedFc4Types = Struct("PortSupportedFc4Types",
-                               Array(32, UNInt8("bits")))
+class HBA_AdapterAttributes(Struct): #pylint: disable-msg=C0103
+    _fields_ = [
+               String("Manufacturer", 64),
+               String("SerialNumber", 64),
+               String("Model", 256),
+               String("ModelDescription", 256),
+               NodeWWN,
+               String("NodeSymbolicName", 256),
+               String("HardwareVersion", 256),
+               String("DriverVersion", 256),
+               String("OptionROMVersion", 256),
+               String("FirmwareVersion", 256),
+               UNInt32("VendorSpecificID"),
+               UNInt32("NumberOfPorts"),
+               String("DriverName", 256)
+               ]
 
-PortActiveFc4Types = Struct("PortActiveFc4Types",
-                               Array(32, UNInt8("bits")))
+class HBA_PortAttributes(Struct): #pylint: disable-msg=C0103
+    _fields_ = [
+                NodeWWN,
+                PortWWN,
+                UNInt32("PortFcId"),
+                UNInt32("PortType"),
+                UNInt32("PortState"),
+                UNInt32("PortSupportedClassofService"),
+                PortSupportedFc4Types,
+                PortActiveFc4Types,
+                String("PortSymbolicName", 256),
+                String("OSDeviceName", 256),
+                UNInt32("PortSuggestedSpeed"),
+                UNInt32("PortSpeed"),
+                UNInt32("PortMaxFrameSize"),
+                FabricName,
+                UNInt32("NumberOfDiscoveredPorts")
+                ]
 
-HBA_AdapterAttributes = Struct("HBA_AdapterAttributes",
-                               String("Manufacturer", length=64, padchar='\x00'),
-                               String("SerialNumber", length=64, padchar='\x00'),
-                               String("Model", length=256, padchar='\x00'),
-                               String("ModelDescription", length=256, padchar='\x00'),
-                               NodeWWN,
-                               String("NodeSymbolicName", length=256, padchar='\x00'),
-                               String("HardwareVersion", length=256, padchar='\x00'),
-                               String("DriverVersion", length=256, padchar='\x00'),
-                               String("OptionROMVersion", length=256, padchar='\x00'),
-                               String("FirmwareVersion", length=256, padchar='\x00'),
-                               UNInt32("VendorSpecificID"),
-                               UNInt32("NumberOfPorts"),
-                               String("DriverName", length=256, padchar='\x00'))
+class HBA_PortStatistics(Struct): #pylint: disable-msg=C0103
+    _fields_ = [
+                SNInt64("SecondsSinceLastReset"),
+                SNInt64("TxFrames"),
+                SNInt64("TxWords"),
+                SNInt64("RxFrames"),
+                SNInt64("RxWords"),
+                SNInt64("LIPCount"),
+                SNInt64("NOSCount"),
+                SNInt64("ErrorFrames"),
+                SNInt64("DumpedFrames"),
+                SNInt64("LinkFailureCount"),
+                SNInt64("LossOfSyncCount"),
+                SNInt64("LossOfSignalCount"),
+                SNInt64("PrimitiveSeqProtocolErrCount"),
+                SNInt64("InvalidTxWordCount"),
+                SNInt64("InvalidCRCCount")
+                ]
 
-HBA_PortAttributes = Struct("HBA_PortAttributes",
-                            NodeWWN,
-                            PortWWN,
-                            UNInt32("PortFcId"),
-                            UNInt32("PortType"),
-                            UNInt32("PortState"),
-                            UNInt32("PortSupportedClassofService"),
-                            PortSupportedFc4Types,
-                            PortActiveFc4Types,
-                            String("PortSymbolicName", length=256, padchar='\x00'),
-                            String("OSDeviceName", length=256, padchar='\x00'),
-                            UNInt32("PortSuggestedSpeed"),
-                            UNInt32("PortSpeed"),
-                            UNInt32("PortMaxFrameSize"),
-                            FabricName,
-                            UNInt32("NumberOfDiscoveredPorts"))
+class HBA_FC4Statistics(Struct): #pylint: disable-msg=C0103
+    _fields_ = [
+               SNInt64("InputRequests"),
+               SNInt64("OutputRequests"),
+               SNInt64("ControlRequests"),
+               SNInt64("InputMegabytes"),
+               SNInt64("OutputMegabytes")
+               ]
 
-HBA_PortStatistics = Struct("HBA_PortStatistics",
-                            SNInt64("SecondsSinceLastReset"),
-                            SNInt64("TxFrames"),
-                            SNInt64("TxWords"),
-                            SNInt64("RxFrames"),
-                            SNInt64("RxWords"),
-                            SNInt64("LIPCount"),
-                            SNInt64("NOSCount"),
-                            SNInt64("ErrorFrames"),
-                            SNInt64("DumpedFrames"),
-                            SNInt64("LinkFailureCount"),
-                            SNInt64("LossOfSyncCount"),
-                            SNInt64("LossOfSignalCount"),
-                            SNInt64("PrimitiveSeqProtocolErrCount"),
-                            SNInt64("InvalidTxWordCount"),
-                            SNInt64("InvalidCRCCount"))
+class HBA_FcpScsiEntryV2(Struct): #pylint: disablemsg=C0103
+    _fields_ = [
+                String("OSDeviceName", 256),
+                UNInt32("ScsiBusNumber"),
+                UNInt32("ScsiTargetNumber"),
+                UNInt32("ScsiOSLun"),
+                Padding(4),
+                UNInt32("Fcid"),
+                NodeWWN,
+                PortWWN,
+                UNInt64("FcpLun"),
+                String("buffer", 256),
+                Padding(4),
+                ]
 
-HBA_FC4Statistics = Struct("HBA_FC4Statistics",
-                           SNInt64("InputRequests"),
-                           SNInt64("OutputRequests"),
-                           SNInt64("ControlRequests"),
-                           SNInt64("InputMegabytes"),
-                           SNInt64("OutputMegabytes"))
+class HBA_FCPTargetMappingV2(Struct): #pylint: disablemsg=C0103
+    _fields_ = [
+                UNInt32("NumberOfEntries"),
+                Padding(4),
+                Array("entry", 1, HBA_FcpScsiEntryV2)
+                ]
 
 #############
 # Constants #

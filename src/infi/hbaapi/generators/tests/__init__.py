@@ -1,5 +1,7 @@
 __import__("pkg_resources").declare_namespace(__name__)
 
+#pylint: disable-all
+
 import unittest
 import mock
 
@@ -15,6 +17,7 @@ class EmptyGenerator(Generator):
     def is_available(cls):
         return True
 
+    @classmethod
     def iter_ports(cls):
         for nothing in []:
             yield
