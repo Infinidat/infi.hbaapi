@@ -63,7 +63,7 @@ class Sysfs(Generator):
             yield path, relpath(path, FC_HOST_BASEPATH).replace('host', '')
 
     def _iter_remote_fc_ports(self, fc_host_path):
-        for path in glob(join(fc_host_path, 'device', 'rport*', 'fc_remote_ports*')):
+        for path in glob(join(fc_host_path, 'device', 'rport*', 'fc_remote_ports', '*')):
             yield path
 
     def get_file_content(self, filepath):
