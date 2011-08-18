@@ -206,7 +206,7 @@ class GeneratorTestCase(unittest.TestCase):
             instance = headers.HBA_AdapterAttributes.create()
             for key, value in attributes.items():
                 setattr(instance, key, value)
-            buffer.raw = headers.HBA_AdapterAttributes.instance_to_string(instance)
+            buffer.raw = headers.HBA_AdapterAttributes.write_to_string(instance)
             return 0
         with mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_GetAdapterAttributes") as api_mock:
             api_mock.side_effect = side_effect
@@ -222,7 +222,7 @@ class GeneratorTestCase(unittest.TestCase):
             instance = headers.HBA_PortAttributes.create()
             for key, value in attributes.items():
                 setattr(instance, key, value)
-            buffer.raw = headers.HBA_PortAttributes.instance_to_string(instance)
+            buffer.raw = headers.HBA_PortAttributes.write_to_string(instance)
             return 0
         with mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_GetAdapterPortAttributes") as api_mock:
             api_mock.side_effect = side_effect
@@ -238,7 +238,7 @@ class GeneratorTestCase(unittest.TestCase):
             instance = headers.HBA_PortAttributes.create()
             for key, value in attributes.items():
                 setattr(instance, key, value)
-            buffer.raw = headers.HBA_PortAttributes.instance_to_string(instance)
+            buffer.raw = headers.HBA_PortAttributes.write_to_string(instance)
             return 0
         with mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_GetDiscoveredPortAttributes") as api_mock:
             api_mock.side_effect = side_effect
@@ -254,7 +254,7 @@ class GeneratorTestCase(unittest.TestCase):
             instance = headers.HBA_PortStatistics.create()
             for key, value in attributes.items():
                 setattr(instance, key, value)
-            buffer.raw = headers.HBA_PortStatistics.instance_to_string(instance)
+            buffer.raw = headers.HBA_PortStatistics.write_to_string(instance)
             return 0
         with mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_GetPortStatistics") as api_mock:
             api_mock.side_effect = side_effect

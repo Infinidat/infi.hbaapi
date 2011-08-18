@@ -138,7 +138,7 @@ class HbaApi(Generator):
             _fields_ = [headers.PortWWN]
         wwn = WWN.create_from_string('\x00' * 8)
         wwn.PortWWN = port_attributes.PortWWN
-        wwn_buffer = WWN.instance_to_string(wwn)
+        wwn_buffer = WWN.write_to_string(wwn)
         return ctypes.c_buffer(wwn_buffer, 8)
 
     def _get_local_port_mappings(self, adapter_handle, wwn_buffer):
@@ -153,7 +153,7 @@ class HbaApi(Generator):
 
         mappings = HBA_FCPTargetMapping.create_from_string('\x00' * HBA_FCPTargetMapping.min_max_sizeof().max)
         mappings.NumberOfEntries = number_of_entries + 1
-        mapping_buffer = ctypes.c_buffer(HBA_FCPTargetMapping.instance_to_string(mappings), HBA_FCPTargetMapping.min_max_sizeof().max)
+        mapping_buffer = ctypes.c_buffer(HBA_FCPTargetMapping.write_to_string(mappings), HBA_FCPTargetMapping.min_max_sizeof().max)
         c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, mapping_buffer)
         mappings = HBA_FCPTargetMapping.create_from_string(mapping_buffer)
         return self._mappings_to_dict(mappings)
