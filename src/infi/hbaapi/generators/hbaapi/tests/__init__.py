@@ -203,10 +203,10 @@ class GeneratorTestCase(unittest.TestCase):
             attributes = ADAPTER_ATTRIBUTES_BY_HANDLE[adapter_handle.value]
             if attributes is NotImplementedError:
                 raise NotImplementedError
-            instance = headers.HBA_AdapterAttributes.create()
+            instance = headers.HBA_AdapterAttributes()
             for key, value in attributes.items():
                 setattr(instance, key, value)
-            buffer.raw = headers.HBA_AdapterAttributes.instance_to_string(instance)
+            buffer.raw = headers.HBA_AdapterAttributes.write_to_string(instance)
             return 0
         with mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_GetAdapterAttributes") as api_mock:
             api_mock.side_effect = side_effect
@@ -219,10 +219,10 @@ class GeneratorTestCase(unittest.TestCase):
             attributes = PORT_ATTRIBUTES_BY_ADAPTER_HANDLE[adapter_handle.value][port_index]
             if attributes is NotImplementedError:
                 raise NotImplementedError
-            instance = headers.HBA_PortAttributes.create()
+            instance = headers.HBA_PortAttributes()
             for key, value in attributes.items():
                 setattr(instance, key, value)
-            buffer.raw = headers.HBA_PortAttributes.instance_to_string(instance)
+            buffer.raw = headers.HBA_PortAttributes.write_to_string(instance)
             return 0
         with mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_GetAdapterPortAttributes") as api_mock:
             api_mock.side_effect = side_effect
@@ -235,10 +235,10 @@ class GeneratorTestCase(unittest.TestCase):
             attributes = REMOTE_PORT_ATTRIBUTES[adapter_handle.value][port_index][remote_port_index]
             if attributes is NotImplementedError:
                 raise NotImplementedError
-            instance = headers.HBA_PortAttributes.create()
+            instance = headers.HBA_PortAttributes()
             for key, value in attributes.items():
                 setattr(instance, key, value)
-            buffer.raw = headers.HBA_PortAttributes.instance_to_string(instance)
+            buffer.raw = headers.HBA_PortAttributes.write_to_string(instance)
             return 0
         with mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_GetDiscoveredPortAttributes") as api_mock:
             api_mock.side_effect = side_effect
@@ -251,10 +251,10 @@ class GeneratorTestCase(unittest.TestCase):
             attributes = PORT_STATISTICS_BY_ADAPTER_HANDLE[adapter_handle.value][port_index]
             if attributes is NotImplementedError:
                 raise NotImplementedError
-            instance = headers.HBA_PortStatistics.create()
+            instance = headers.HBA_PortStatistics()
             for key, value in attributes.items():
                 setattr(instance, key, value)
-            buffer.raw = headers.HBA_PortStatistics.instance_to_string(instance)
+            buffer.raw = headers.HBA_PortStatistics.write_to_string(instance)
             return 0
         with mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_GetPortStatistics") as api_mock:
             api_mock.side_effect = side_effect
