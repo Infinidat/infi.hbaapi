@@ -124,6 +124,8 @@ class HbaApi(Generator):
             c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, mapping_buffer)
         except RuntimeError, exception:
             return_code = exception.args[0]
+            if return_code == headers.HBA_STATUS_ERROR_ILLEGAL_WWN:
+                return 0
             if return_code == headers.HBA_STATUS_ERROR_NOT_SUPPORTED:
                 return 0
             if return_code == headers.HBA_STATUS_ERROR_MORE_DATA:
@@ -143,6 +145,8 @@ class HbaApi(Generator):
 
     def _get_local_port_mappings(self, adapter_handle, wwn_buffer):
         number_of_entries = self._get_local_port_mappings_count(adapter_handle, wwn_buffer)
+        if not number_of_entries:
+            return {}
 
         class HBA_FCPTargetMapping(headers.Struct): #pylint: disablemsg=C0103
             _fields_ = [
