@@ -44,6 +44,7 @@ class GeneratorTestCase(unittest.TestCase):
 class RemotePortsTestCase(unittest.TestCase):
     @mock.patch.object(sysfs, 'ROOT_FS' , REMOTE_PORTS_MOCK_ROOT_FS)
     def test_mock_fs(self):
+        raise unittest.SkipTest("the mocked filesystem was removed because windows filesystem")
         logging.debug("mock_fs = %s", REMOTE_PORTS_MOCK_ROOT_FS)
         self.assertIs(sysfs.ROOT_FS, REMOTE_PORTS_MOCK_ROOT_FS)
         self.assertTrue(sysfs.Sysfs.is_available())
