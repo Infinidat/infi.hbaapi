@@ -2,7 +2,7 @@ __import__("pkg_resources").declare_namespace(__name__)
 
 import sys
 from os.path import exists, join, sep, dirname, pardir, abspath
-MOCK_ROOT_FS = abspath(join(dirname(__file__), pardir, pardir, pardir, pardir, 'mock_fs'))
+MOCK_ROOT_FS = abspath(join(dirname(__file__), pardir, pardir, pardir, pardir, 'mock_fs', 'redhat_no_remote_ports'))
 
 def _print_hbaapi_example():
     import json

@@ -108,7 +108,10 @@ class Sysfs(Generator):
         from re import compile
         pattern = compile(r"(?P<host>\d+)[^\d](?P<channel>\d+)[^\d](?P<target>\d)")
         result = pattern.search(base_path).groupdict()
-        port.hct = (local_port.hct[0], int(result['channel']), int(result['target']))
+        # TODO get the target number from the scsi_target_id_file inside base_path
+        target_path = join(base_path, "scsi_target_id")
+        target_id = open(target_path).read().strip("\n").strip() if exists(target_path) else "-1"
+        port.hct = (local_port.hct[0], int(result['channel']), int(target_id))
 
     def _populate_local_port_hct(self, port, base_path):
         from re import compile
@@ -134,6 +137,9 @@ class Sysfs(Generator):
         for remote_fc_port_path in self._iter_remote_fc_ports(fc_host_path):
             remote_port = Port()
             self._populate_remote_port_attributes_from_fc_host(remote_port, remote_fc_port_path, port)
+            if remote_port.hct[2] == -1:
+                # this is not a real target, just a switch port
+                continue
             port.discovered_ports.append(remote_port)
 
     def iter_ports(self):
