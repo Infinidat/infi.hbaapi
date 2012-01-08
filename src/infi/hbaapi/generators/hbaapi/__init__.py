@@ -126,46 +126,32 @@ class HbaApi(Generator):
             result[key] = value
         return result
 
-    def _get_local_port_mappings_count(self, adapter_handle, wwn_buffer):
-        mapping_buffer = ctypes.c_buffer(headers.HBA_FCPTargetMappingV2.min_max_sizeof().max)
+    def _extract_wwn_buffer_from_port_attributes(self, port_attributes):
+        return ctypes.c_buffer(port_attributes.PortWWN, 8)
+
+    def _get_local_port_mappings(self, adapter_handle, wwn_buffer, number_of_entries=1):
+        klass = headers.HBA_FCPTargetMappingV2
+        buffer_size = klass.min_max_sizeof().max + \
+                headers.HBA_FcpScsiEntryV2.min_max_sizeof().max*number_of_entries
+        mappings_buffer = ctypes.c_buffer('\x00'*buffer_size, buffer_size)
         try:
-            c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, mapping_buffer)
+            c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, mappings_buffer)
         except RuntimeError, exception:
+            msg ="failed to fetch port mappings for local wwn {!r}"
+            log.debug(msg.format(binascii.hexlify(wwn_buffer.raw)))
             return_code = exception.args[0]
             if return_code == headers.HBA_STATUS_ERROR_ILLEGAL_WWN:
-                return 0
+                log.debug("error code is HBA_STATUS_ERROR_ILLEGAL_WWN")
+                return {}
             if return_code == headers.HBA_STATUS_ERROR_NOT_SUPPORTED:
-                return 0
+                log.debug("error code is HBA_STATUS_ERROR_NOT_SUPPORTED")
+                return {}
             if return_code == headers.HBA_STATUS_ERROR_MORE_DATA:
-                pass
+                log.debug("error code is HBA_STATUS_ERROR_MORE_DATA")
+                return self._get_local_port_mappings(adapter_handle, wwn_buffer,
+                                                     number_of_entries*2)
             else:
                 raise
-        mappings = headers.HBA_FCPTargetMappingV2.create_from_string(mapping_buffer)
-        return mappings.NumberOfEntries
-
-    def _extract_wwn_buffer_from_port_attributes(self, port_attributes):
-        class WWN(headers.Struct):
-            _fields_ = [headers.PortWWN]
-        wwn = WWN.create_from_string('\x00' * 8)
-        wwn.PortWWN = port_attributes.PortWWN
-        wwn_buffer = WWN.write_to_string(wwn)
-        return ctypes.c_buffer(wwn_buffer, 8)
-
-    def _get_local_port_mappings(self, adapter_handle, wwn_buffer):
-        number_of_entries = self._get_local_port_mappings_count(adapter_handle, wwn_buffer)
-        if not number_of_entries:
-            return {}
-
-        class HBA_FCPTargetMapping(headers.Struct): #pylint: disablemsg=C0103
-            _fields_ = [
-                    headers.UNInt32("NumberOfEntries"),
-                    headers.Padding(4),
-                    headers.Array("entries", number_of_entries + 1, headers.HBA_FcpScsiEntryV2)
-                    ]
-
-        mappings = HBA_FCPTargetMapping.create_from_string('\x00' * HBA_FCPTargetMapping.min_max_sizeof().max)
-        mappings.NumberOfEntries = number_of_entries + 1
-        mapping_buffer = ctypes.c_buffer(HBA_FCPTargetMapping.write_to_string(mappings), HBA_FCPTargetMapping.min_max_sizeof().max)
         c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, mapping_buffer)
         mappings = HBA_FCPTargetMapping.create_from_string(mapping_buffer)
         return self._mappings_to_dict(mappings)
