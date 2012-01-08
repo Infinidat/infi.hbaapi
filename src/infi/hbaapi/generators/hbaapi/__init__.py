@@ -20,6 +20,7 @@ class HbaApi(Generator):
         for adapter_index in range (0, c_api.HBA_GetNumberOfAdapters()):
             adapter_name = ctypes.create_string_buffer(headers.MAX_ADAPTERNAME_LENGTH)
             c_api.HBA_GetAdapterName(adapter_index, adapter_name)
+            log.debug("yield adapter index {} name {!r}".format(adapter_index, adapter_name.value))
             yield adapter_name
 
     def _get_adapter_attributes(self, adapter_handle):
@@ -167,6 +168,7 @@ class HbaApi(Generator):
                         logging.debug("found a weird host bus adapter, named: %s", adapter_name.value)
                         continue
                     for port_index in range(0, adapter_attributes.NumberOfPorts):
+                        log.debug("yield port index {} for adapter name {}".format(port_index, adapter_name))
                         local_port = self._get_local_port(adapter_handle, adapter_attributes, port_index)
                         yield local_port
 
