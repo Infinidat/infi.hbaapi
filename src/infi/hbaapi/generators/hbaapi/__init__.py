@@ -7,6 +7,9 @@ import ctypes
 from .. import Generator
 from ... import Port, PortStatistics, FC_PORT_STATISTICS
 import c_api, headers
+import binascii
+
+log = logging.getLogger()
 
 class HbaApi(Generator):
     def __init__(self):
@@ -41,7 +44,9 @@ class HbaApi(Generator):
         remote_ports = []
         for remote_port_index in range(0, number_of_remote_ports):
             remote_port_attributes = self._get_remote_port_attributes(adapter_handle, port_index, remote_port_index)
-            remote_ports.append(get_port_object(None, remote_port_attributes))
+            remote_port = get_port_object(None, remote_port_attributes)
+            log.debug("Found remote port {!r}".format(remote_port.port_wwn))
+            remote_ports.append(remote_port)
         return remote_ports
 
     def _populate_local_port_hct(self, port):
@@ -53,7 +58,9 @@ class HbaApi(Generator):
     def _get_local_port(self, adapter_handle, adapter_attributes, port_index):
         port_attributes = self._get_port_attributes(adapter_handle, port_index)
         wwn_buffer = self._extract_wwn_buffer_from_port_attributes(port_attributes)
+        logging.debug("checking local fc port {!r}".format(binascii.hexlify(wwn_buffer.raw)))
         number_of_remote_ports = port_attributes.NumberOfDiscoveredPorts
+        logging.debug("number of remote ports = {!r}".format(number_of_remote_ports))
         remote_ports = self._get_remote_ports(adapter_handle, port_index, number_of_remote_ports)
         port_statistics = self._get_local_port_statistics(adapter_handle, port_index, wwn_buffer)
         port_mappings = self._get_local_port_mappings(adapter_handle, wwn_buffer)
