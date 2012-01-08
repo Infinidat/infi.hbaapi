@@ -10,6 +10,9 @@ from os.path import exists, join, sep, dirname, pardir, abspath
 from ... import hbaapi
 from .. import headers, c_api
 
+def _translate_wwn(source):
+    return ''.join([chr(item) for item in source])
+
 ADAPTER_NAMES = ['lsiSAS', 'qlogic1', 'qlogic2']
 ADAPTER_HANDLES = {'lsiSAS': 1, 'qlogic1': 2, 'qlogic2': 3}
 ADAPTER_ATTRIBUTES_BY_HANDLE = {1: NotImplementedError,
@@ -18,7 +21,7 @@ ADAPTER_ATTRIBUTES_BY_HANDLE = {1: NotImplementedError,
     SerialNumber='I48461',
     Model='QLE2562',
     ModelDescription='QLogic QLE2562 Fibre Channel Adapter',
-    NodeWWN=[32, 0, 0, 36, 255, 44, 77, 242, ],
+    NodeWWN=_translate_wwn([32, 0, 0, 36, 255, 44, 77, 242, ]),
     NodeSymbolicName='QLE2562 FW:v4.06.01 DVR:v9.1.8.6',
     HardwareVersion='',
     DriverVersion='9.1.8.6',
@@ -32,7 +35,7 @@ ADAPTER_ATTRIBUTES_BY_HANDLE = {1: NotImplementedError,
     SerialNumber='I48717',
     Model='QLE2562',
     ModelDescription='QLogic QLE2562 Fibre Channel Adapter',
-    NodeWWN=[32, 0, 0, 36, 255, 44, 77, 243, ],
+    NodeWWN=_translate_wwn([32, 0, 0, 36, 255, 44, 77, 243, ]),
     NodeSymbolicName='QLE2562 FW:v4.06.01 DVR:v9.1.8.6',
     HardwareVersion='',
     DriverVersion='9.1.8.6',
@@ -44,8 +47,8 @@ ADAPTER_ATTRIBUTES_BY_HANDLE = {1: NotImplementedError,
 )}
 
 PORT_ATTRIBUTES_BY_ADAPTER_HANDLE = {2:[dict(
-    NodeWWN=[32, 0, 0, 36, 255, 44, 77, 242, ],
-    PortWWN=[33, 0, 0, 36, 255, 44, 77, 242, ],
+    NodeWWN=_translate_wwn([32, 0, 0, 36, 255, 44, 77, 242, ]),
+    PortWWN=_translate_wwn([33, 0, 0, 36, 255, 44, 77, 242, ]),
     PortFcId=0,
     PortType=1,
     PortState=6,
@@ -57,12 +60,12 @@ PORT_ATTRIBUTES_BY_ADAPTER_HANDLE = {2:[dict(
     PortSuggestedSpeed=26,
     PortSpeed=0,
     PortMaxFrameSize=2048,
-    FabricName=[0, 0, 0, 0, 0, 0, 0, 0],
+    FabricName=_translate_wwn([0, 0, 0, 0, 0, 0, 0, 0]),
     NumberOfDiscoveredPorts=1,),
                                         ],
                                      3:[dict(
-    NodeWWN=[32, 0, 0, 36, 255, 44, 77, 243, ],
-    PortWWN=[33, 0, 0, 36, 255, 44, 77, 243, ],
+    NodeWWN=_translate_wwn([32, 0, 0, 36, 255, 44, 77, 243, ]),
+    PortWWN=_translate_wwn([33, 0, 0, 36, 255, 44, 77, 243, ]),
     PortFcId=0,
     PortType=1,
     PortState=6,
@@ -74,14 +77,14 @@ PORT_ATTRIBUTES_BY_ADAPTER_HANDLE = {2:[dict(
     PortSuggestedSpeed=26,
     PortSpeed=0,
     PortMaxFrameSize=2048,
-    FabricName=[0, 0, 0, 0, 0, 0, 0, 0],
+    FabricName=_translate_wwn([0, 0, 0, 0, 0, 0, 0, 0]),
     NumberOfDiscoveredPorts=1,),
                                         ]}
 
 REMOTE_PORT_ATTRIBUTES = {
     2: [[dict(
-    NodeWWN=[1, 2, 3, 4, 5, 6, 7, 8],
-    PortWWN=[1, 2, 3, 4, 5, 6, 7, 8],
+    NodeWWN=_translate_wwn([1, 2, 3, 4, 5, 6, 7, 8]),
+    PortWWN=_translate_wwn([1, 2, 3, 4, 5, 6, 7, 8]),
     PortFcId=123,
     PortType=0,
     PortState=1,
@@ -93,11 +96,11 @@ REMOTE_PORT_ATTRIBUTES = {
     PortSuggestedSpeed=0,
     PortSpeed=0,
     PortMaxFrameSize=0,
-    FabricName=[0] * 8,
+    FabricName=_translate_wwn([0, 0, 0, 0, 0, 0, 0, 0]),
     NumberOfDiscoveredPorts=0,)]],
     3: [[dict(
-    NodeWWN=[1, 2, 3, 4, 5, 6, 7, 8],
-    PortWWN=[1, 2, 3, 4, 5, 6, 7, 8],
+    NodeWWN=_translate_wwn([1, 2, 3, 4, 5, 6, 7, 8]),
+    PortWWN=_translate_wwn([1, 2, 3, 4, 5, 6, 7, 8]),
     PortFcId=123,
     PortType=0,
     PortState=1,
@@ -109,7 +112,7 @@ REMOTE_PORT_ATTRIBUTES = {
     PortSuggestedSpeed=0,
     PortSpeed=0,
     PortMaxFrameSize=0,
-    FabricName=[0] * 8,
+    FabricName=_translate_wwn([0, 0, 0, 0, 0, 0, 0, 0]),
     NumberOfDiscoveredPorts=0,)], ]}
 
 PORT_STATISTICS_BY_ADAPTER_HANDLE = {2:[dict(
@@ -219,9 +222,7 @@ class GeneratorTestCase(unittest.TestCase):
             attributes = PORT_ATTRIBUTES_BY_ADAPTER_HANDLE[adapter_handle.value][port_index]
             if attributes is NotImplementedError:
                 raise NotImplementedError
-            instance = headers.HBA_PortAttributes()
-            for key, value in attributes.items():
-                setattr(instance, key, value)
+            instance = headers.HBA_PortAttributes(**attributes)
             buffer.raw = headers.HBA_PortAttributes.write_to_string(instance)
             return 0
         with mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_GetAdapterPortAttributes") as api_mock:
@@ -235,9 +236,7 @@ class GeneratorTestCase(unittest.TestCase):
             attributes = REMOTE_PORT_ATTRIBUTES[adapter_handle.value][port_index][remote_port_index]
             if attributes is NotImplementedError:
                 raise NotImplementedError
-            instance = headers.HBA_PortAttributes()
-            for key, value in attributes.items():
-                setattr(instance, key, value)
+            instance = headers.HBA_PortAttributes(**attributes)
             buffer.raw = headers.HBA_PortAttributes.write_to_string(instance)
             return 0
         with mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_GetDiscoveredPortAttributes") as api_mock:

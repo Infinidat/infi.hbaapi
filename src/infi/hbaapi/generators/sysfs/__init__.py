@@ -97,12 +97,12 @@ class Sysfs(Generator):
 	self._populate_local_port_hct(port, base_path)
 
     def _populate_port_attributes_from_scsi_host(self, port, base_path):
-        port.model = self.get_file_content(join(base_path, 'model_name'))
-        port.model_description = self.get_file_content(join(base_path, 'model_desc*'))
-        port.driver_version = self.get_file_content(join(base_path, 'driver_version'))
-        port.serial_number = self.get_file_content(join(base_path, 'serial_num'))
-        port.hardware_version = self.get_file_content(join(base_path, 'fw_version'))
-        port.option_rom_version = self.get_file_content(join(base_path, 'optrom_fw_version'))
+        port.model = self.get_file_content(join(base_path, 'model*name'))
+        port.model_description = self.get_file_content(join(base_path, 'model*desc*'))
+        port.driver_version = self.get_file_content(join(base_path, '*dr*v*_version'))
+        port.serial_number = self.get_file_content(join(base_path, 'serial*num'))
+        port.hardware_version = self.get_file_content(join(base_path, 'fw*e*'))
+        port.option_rom_version = self.get_file_content(join(base_path, 'optrom_*_version'))
 
     def _populate_remote_port_hct(self, port, base_path, local_port):
         from re import compile

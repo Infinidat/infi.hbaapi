@@ -189,7 +189,7 @@ class HBA_GetFC4Statistics(HbaApiFunction): #pylint: disable-msg=C0103
     @classmethod
     def get_parameters(cls):
         return ((headers.HBA_HANDLE, IN, 'handle'),
-                (ctypes.c_void_p, IN, 'portWWN'),
+                (ctypes.c_uint64, IN, 'portWWN'),
                 (ctypes.c_uint8, IN, 'FC4type'),
                 (ctypes.c_void_p, IN_OUT, 'fcpStatistics'))
 
@@ -203,5 +203,6 @@ class HBA_GetFcpTargetMappingV2(HbaApiFunction): #pylint: disable-msg=C0103
     @classmethod
     def get_parameters(cls):
         return ((headers.HBA_HANDLE, IN, "handle"),
-                (ctypes.c_void_p, IN, "hbaPortWWN"),
+                (ctypes.c_uint64, IN, "hbaPortWWN"),
                 (ctypes.c_void_p, IN_OUT, "pMapping"))
+
