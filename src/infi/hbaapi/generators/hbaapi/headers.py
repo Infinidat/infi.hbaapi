@@ -1,10 +1,9 @@
 
 import ctypes
-from infi.instruct import Struct
+from infi.instruct import Struct, VarSizeArray, ReadPointer, Field, Padding
 from infi.instruct import FixedSizeArray as Array
 from infi.instruct import FixedSizeString as String
 from infi.instruct import UNInt32, UNInt8, SNInt64, UNInt64
-from infi.instruct import Padding
 
 ##############
 # Data Types #
@@ -26,10 +25,10 @@ HBA_COS = HBA_UINT32
 # Structures #
 ##############
 
-NodeWWN = Array("NodeWWN", 8, UNInt8)
-PortWWN = Array("PortWWN", 8, UNInt8)
-FabricName = Array("FabricName", 8, UNInt8)
 BitsArray = Array('bits', 32, UNInt8)
+
+def HBA_WWN(name):
+    return String(name, 8)
 
 PortSupportedFc4Types = Array("PortSupportedFc4Types", 32, UNInt8)
 PortActiveFc4Types = Array("PortActiveFc4Types", 32, UNInt8)
@@ -44,7 +43,7 @@ class HBA_AdapterAttributes(Struct): #pylint: disable-msg=C0103
                String("SerialNumber", 64),
                String("Model", 256),
                String("ModelDescription", 256),
-               NodeWWN,
+               HBA_WWN("NodeWWN"),
                String("NodeSymbolicName", 256),
                String("HardwareVersion", 256),
                String("DriverVersion", 256),
@@ -57,8 +56,8 @@ class HBA_AdapterAttributes(Struct): #pylint: disable-msg=C0103
 
 class HBA_PortAttributes(Struct): #pylint: disable-msg=C0103
     _fields_ = [
-                NodeWWN,
-                PortWWN,
+                HBA_WWN("NodeWWN"),
+                HBA_WWN("PortWWN"),
                 UNInt32("PortFcId"),
                 UNInt32("PortType"),
                 UNInt32("PortState"),
@@ -70,7 +69,7 @@ class HBA_PortAttributes(Struct): #pylint: disable-msg=C0103
                 UNInt32("PortSuggestedSpeed"),
                 UNInt32("PortSpeed"),
                 UNInt32("PortMaxFrameSize"),
-                FabricName,
+                HBA_WWN("FabricName"),
                 UNInt32("NumberOfDiscoveredPorts")
                 ]
 
@@ -102,18 +101,31 @@ class HBA_FC4Statistics(Struct): #pylint: disable-msg=C0103
                SNInt64("OutputMegabytes")
                ]
 
-class HBA_FcpScsiEntryV2(Struct): #pylint: disablemsg=C0103
+class HBA_SCSIID(Struct): #pylint: disablemsg=C0103
     _fields_ = [
                 String("OSDeviceName", 256),
                 UNInt32("ScsiBusNumber"),
                 UNInt32("ScsiTargetNumber"),
                 UNInt32("ScsiOSLun"),
-                Padding(4),
+                Padding(4), ]
+
+class HBA_FcpId(Struct): #pylint: disablemsg=C0103
+    _fields_ = [
                 UNInt32("Fcid"),
-                NodeWWN,
-                PortWWN,
+                HBA_WWN("NodeWWN"),
+                HBA_WWN("PortWWN"),
                 UNInt64("FcpLun"),
+                ]
+
+class HBA_LUID(Struct): #pylint: disablemsg=C0103
+    _fields_ = [
                 String("buffer", 256),
+                ]
+
+class HBA_FcpScsiEntryV2(Struct): #pylint: disablemsg=C0103
+    _fields_ = [Field("ScsiId", HBA_SCSIID),
+                Field("FcId", HBA_FcpId),
+                Field("LUID", HBA_LUID),
                 Padding(4),
                 ]
 
@@ -121,7 +133,7 @@ class HBA_FCPTargetMappingV2(Struct): #pylint: disablemsg=C0103
     _fields_ = [
                 UNInt32("NumberOfEntries"),
                 Padding(4),
-                Array("entry", 1, HBA_FcpScsiEntryV2)
+                VarSizeArray("entry", ReadPointer("NumberOfEntries"), HBA_FcpScsiEntryV2)
                 ]
 
 #############

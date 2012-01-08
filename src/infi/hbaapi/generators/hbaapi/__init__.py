@@ -6,6 +6,7 @@ from bunch import Bunch
 import ctypes
 from .. import Generator
 from ... import Port, PortStatistics, FC_PORT_STATISTICS
+from infi.dtypes.wwn import WWN
 import c_api, headers
 import binascii
 
@@ -209,8 +210,7 @@ class HbaApi(Generator):
             c_api.HBA_CloseAdapter(handle)
 
 def translate_wwn(source):
-    from infi.dtypes.wwn import WWN
-    return WWN(':'.join([hex(item).lstrip('0x').zfill(2) for item in source]))
+    return WWN(binascii.hexlify(source))
 
 def translate_port_speed(source):
     """ PortSpeed indicates the signalling bit rate at which this port is currently operating.
