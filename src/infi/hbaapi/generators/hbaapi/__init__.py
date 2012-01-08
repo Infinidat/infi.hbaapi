@@ -59,21 +59,19 @@ class HbaApi(Generator):
 
     def _get_local_port(self, adapter_handle, adapter_attributes, port_index):
         port_attributes = self._get_port_attributes(adapter_handle, port_index)
-        wwn_buffer = self._extract_wwn_buffer_from_port_attributes(port_attributes)
-        logging.debug("checking local fc port {!r}".format(binascii.hexlify(wwn_buffer.raw)))
-        number_of_remote_ports = port_attributes.NumberOfDiscoveredPorts
-        logging.debug("number of remote ports = {!r}".format(number_of_remote_ports))
-        remote_ports = self._get_remote_ports(adapter_handle, port_index, number_of_remote_ports)
-        port_statistics = self._get_local_port_statistics(adapter_handle, port_index, wwn_buffer)
-        port_mappings = self._get_local_port_mappings(adapter_handle, wwn_buffer)
         port = get_port_object(adapter_attributes, port_attributes)
-        port.discovered_ports = remote_ports
-        port.statistics = port_statistics
+        logging.debug("checking local fc port {!r}".format(port.port_wwn))
         self._populate_local_port_hct(port)
+        wwn_buffer = self._extract_wwn_buffer_from_port_attributes(port_attributes)
+        number_of_remote_ports = port_attributes.NumberOfDiscoveredPorts
+        remote_ports = self._get_remote_ports(adapter_handle, port_index, number_of_remote_ports)
+        port.discovered_ports = remote_ports
+        port_statistics = self._get_local_port_statistics(adapter_handle, port_index, wwn_buffer)
+        port.statistics = port_statistics
+        port_mappings = self._get_local_port_mappings(adapter_handle, wwn_buffer)
         for remote_port in port.discovered_ports:
-            if remote_port.port_wwn not in port_mappings.keys():
-                continue
-            remote_port.hct = (port.hct[0],) + port_mappings[remote_port.port_wwn]
+            channel, target = port_mappings.get(remote_port.port_wwn, (-1, -1))
+            remote_port.hct = (port.hct[0], channel, target)
         return port
 
     def _get_local_port_statistics(self, adapter_handle, port_index, wwn_buffer):
@@ -121,21 +119,45 @@ class HbaApi(Generator):
 
     def _mappings_to_dict(self, mappings):
         result = dict()
-        for entry in mappings.entries:
-            key = translate_wwn(entry.PortWWN)
-            value = (entry.ScsiBusNumber, entry.ScsiTargetNumber)
+        for entry in mappings.entry:
+            if entry.FcId.PortWWN == '':
+                log.debug("Found an empty mapping")
+                continue
+            log.debug("Found mapping {!r} to {!r}".format(entry.ScsiId, binascii.hexlify(entry.FcId.PortWWN)))
+            key = translate_wwn(entry.FcId.PortWWN)
+            value = (entry.ScsiId.ScsiBusNumber, entry.ScsiId.ScsiTargetNumber)
             result[key] = value
+        log.debug("{!r}".format(result))
         return result
 
     def _extract_wwn_buffer_from_port_attributes(self, port_attributes):
-        return ctypes.c_buffer(port_attributes.PortWWN, 8)
+        return ctypes.c_uint64(headers.UNInt64.create_from_string(port_attributes.PortWWN))
 
-    def _get_local_port_mappings(self, adapter_handle, wwn_buffer, number_of_entries=1):
-        klass = headers.HBA_FCPTargetMappingV2
-        buffer_size = klass.min_max_sizeof().max + \
-                headers.HBA_FcpScsiEntryV2.min_max_sizeof().max*number_of_entries
-        mappings_buffer = ctypes.c_buffer('\x00'*buffer_size, buffer_size)
+    def _build_empty_mappings_struct(self, number_of_elements):
+        element_size = headers.HBA_FcpScsiEntryV2.min_max_sizeof().max
+        entry = headers.HBA_FcpScsiEntryV2.create_from_string('\x00'*element_size)
+        struct = headers.HBA_FCPTargetMappingV2(NumberOfEntries=number_of_elements,
+                                                entry=[entry for index in range(number_of_elements)])
+        return struct
+
+    def _get_local_port_mappings_count(self, adapter_handle, wwn_buffer):
+        struct = self._build_empty_mappings_struct(0)
+        size = struct.sizeof(struct)
+        mappings_buffer = ctypes.c_buffer('\x00'*size, size)
         try:
+            c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, mappings_buffer)
+        except RuntimeError, exception:
+            return_code = exception.args[0]
+            if return_code == headers.HBA_STATUS_ERROR_MORE_DATA:
+                return headers.UNInt32.create_from_string(mappings_buffer)
+        return 0
+
+    def _get_local_port_mappings(self, adapter_handle, wwn_buffer):
+        try:
+            number_of_entries = self._get_local_port_mappings_count(adapter_handle, wwn_buffer)
+            struct = self._build_empty_mappings_struct(number_of_entries)
+            size = struct.sizeof(struct)
+            mappings_buffer = ctypes.c_buffer(struct.write_to_string(struct), size)
             c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, mappings_buffer)
         except RuntimeError, exception:
             msg ="failed to fetch port mappings for local wwn {!r}"
@@ -148,13 +170,12 @@ class HbaApi(Generator):
                 log.debug("error code is HBA_STATUS_ERROR_NOT_SUPPORTED")
                 return {}
             if return_code == headers.HBA_STATUS_ERROR_MORE_DATA:
-                log.debug("error code is HBA_STATUS_ERROR_MORE_DATA")
                 return self._get_local_port_mappings(adapter_handle, wwn_buffer,
-                                                     number_of_entries*2)
+                                                     buffer_size*2)
             else:
                 raise
-        c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, mapping_buffer)
-        mappings = HBA_FCPTargetMapping.create_from_string(mapping_buffer)
+        
+        mappings = headers.HBA_FCPTargetMappingV2.create_from_string(mappings_buffer)
         return self._mappings_to_dict(mappings)
 
     def iter_ports(self):
