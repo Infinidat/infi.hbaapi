@@ -219,7 +219,10 @@ class HbaApi(Generator):
             c_api.HBA_CloseAdapter(handle)
 
 def translate_wwn(source):
-    return WWN(binascii.hexlify(source))
+    return WWN(binascii.hexlify(source if source != '' else '\x00'*8))
+
+def translate_port_type(number):
+    return headers.HBA_PORTTYPE[str(number)]
 
 def translate_port_speed(source):
     """ PortSpeed indicates the signalling bit rate at which this port is currently operating.
@@ -276,7 +279,7 @@ def get_port_object(adapter_attributes=Bunch(), port_attributes=Bunch()):
                                        getattr(port_attributes, "NodeWWN", None))
     kwargs['port_wwn'] = translate_wwn(getattr(port_attributes, "PortWWN"))
     kwargs['port_fcid'] = getattr(port_attributes, "PortFcId")
-    kwargs['port_type'] = getattr(port_attributes, "PortType")
+    kwargs['port_type'] = translate_port_type(getattr(port_attributes, "PortType"))
     kwargs['port_state'] = translate_port_state(getattr(port_attributes, "PortState"))
     kwargs['port_speed'] = translate_port_speed(getattr(port_attributes, "PortSpeed"))
     kwargs['port_symbolic_name'] = getattr(port_attributes, "PortSymbolicName").strip('\x00')

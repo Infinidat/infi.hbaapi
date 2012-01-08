@@ -183,6 +183,19 @@ HBA_PORTTYPE_GPORT = 10
 HBA_PORTTYPE_LPORT = 20
 HBA_PORTTYPE_PTP = 21
 
+HBA_PORTTYPE = {'0':None,
+                '1':None,
+                '2':None,
+                '3':None,
+                '5':'N',
+                '6':'NL',
+                '7':'FL',
+                '8':'F',
+                '9':'E',
+                '10':'G',
+                '20':'L',
+                '21':'PTP'}
+
 HBA_PORTSTATE_UNKNOWN = 1
 HBA_PORTSTATE_ONLINE = 2
 HBA_PORTSTATE_OFFLINE = 3
