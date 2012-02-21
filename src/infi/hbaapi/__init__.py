@@ -78,7 +78,7 @@ class PortsCollection(object):
         return [port for port in self._ports.values()]
 
     def iter_ports(self):
-        for port in self._ports:
+        for port in self._ports.values():
             yield port
 
     def get_port_by_wwn(self, wwn):
