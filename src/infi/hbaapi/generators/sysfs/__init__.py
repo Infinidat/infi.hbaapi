@@ -63,8 +63,14 @@ class Sysfs(Generator):
             yield path, relpath(path, FC_HOST_BASEPATH).replace('host', '')
 
     def _iter_remote_fc_ports(self, fc_host_path):
-        for path in glob(join(fc_host_path, 'device', 'rport*', 'fc_remote_ports', '*')):
-            yield path
+        for rport in glob(join(fc_host_path, 'device', 'rport*')):
+            if exists(join(rport, 'fc_remote_ports')):
+                # this is how its on ubuntu
+                for path in glob(join(rport, 'fc_remote_ports', '*')):
+                    yield path
+            else:
+                for path in glob(join(rport, 'fc_remote_ports*')):
+                    yield path
 
     def get_file_content(self, filepath):
         # The purpose of this method is to return the file's content with no exceptions.
