@@ -64,6 +64,9 @@ class HbaApi(Generator):
             if remote_port.port_fcid in WELL_KNOWN_FC_ADDRESSES:
                 msg = "port {!r} is a well-known FC address with fcid {!r}"
                 log.debug(msg.format(remote_port.port_wwn, remote_port.port_fcid))
+            elif remote_port.port_state == 'offline':
+                msg = "remote port {!r} is offline"
+                log.debug(msg.format(remote_port.port_wwn)
             else:
                 remote_ports.append(remote_port)
         return remote_ports
