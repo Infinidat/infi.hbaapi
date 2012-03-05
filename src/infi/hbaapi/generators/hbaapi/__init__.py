@@ -66,7 +66,7 @@ class HbaApi(Generator):
                 log.debug(msg.format(remote_port.port_wwn, remote_port.port_fcid))
             elif remote_port.port_state == 'offline':
                 msg = "remote port {!r} is offline"
-                log.debug(msg.format(remote_port.port_wwn)
+                log.debug(msg.format(remote_port.port_wwn))
             else:
                 remote_ports.append(remote_port)
         return remote_ports
