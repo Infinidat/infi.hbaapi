@@ -34,6 +34,10 @@ def errcheck_inconsistency(errcheck_func=errcheck_nonzero):
 
 class HbaApiFunction(WrappedFunction):
     @classmethod
+    def _get_function_type(cls):
+        return 'CFUNCTYPE'
+
+    @classmethod
     def _get_library(cls):
         library_name = HBAAPI_SHARED_LIBRARY_FILENAMES.get(get_os_name(), None)
         if library_name is None:
@@ -105,7 +109,7 @@ class HBA_GetAdapterName(HbaApiFunction): #pylint: disable-msg=C0103
     @classmethod
     def get_parameters(cls):
         return (headers.UINT32, IN, 'adapterIndex'), \
-            (ctypes.POINTER(ctypes.c_char), IN_OUT, 'adapterName')
+            (ctypes.POINTER(ctypes.c_char), IN, 'adapterName')
 
 class HBA_OpenAdapter(HbaApiFunction): #pylint: disable-msg=C0103
     return_value = headers.HBA_HANDLE
