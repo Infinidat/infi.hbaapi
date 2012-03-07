@@ -6,7 +6,24 @@ from bunch import Bunch
 import ctypes
 from .. import Generator
 from ... import Port, PortStatistics, FC_PORT_STATISTICS
+from infi.dtypes.wwn import WWN
 import c_api, headers
+import binascii
+
+log = logging.getLogger()
+
+WELL_KNOWN_FC_ADDRESSES = [
+    0xFFFFF5, # Multicast server
+    0xFFFFF6, # Clock Sync server
+    0xFFFFF7, # KDC (key distribution)
+    0xFFFFF8, # Alias server (for multicast, or hunt groups)
+    0xFFFFF9, # QoS information
+    0xFFFFFA, # Management server
+    0xFFFFFB, # Time server
+    0xFFFFFC, # Directory server
+    0xFFFFFD, # Fabric Controller
+    0xFFFFFE, # Fabric Login server
+]
 
 class HbaApi(Generator):
     def __init__(self):
@@ -16,32 +33,42 @@ class HbaApi(Generator):
         for adapter_index in range (0, c_api.HBA_GetNumberOfAdapters()):
             adapter_name = ctypes.create_string_buffer(headers.MAX_ADAPTERNAME_LENGTH)
             c_api.HBA_GetAdapterName(adapter_index, adapter_name)
+            log.debug("yield adapter index {} name {!r}".format(adapter_index, adapter_name.value))
             yield adapter_name
 
     def _get_adapter_attributes(self, adapter_handle):
         buff = ctypes.c_buffer(headers.HBA_AdapterAttributes.min_max_sizeof().max) #pylint: disable-msg=W0622,E1101
         c_api.HBA_GetAdapterAttributes(adapter_handle, buff)
-        adapter_attributes = headers.HBA_AdapterAttributes.create_instance_from_string(buff) #pylint: disable-msg=E1101
+        adapter_attributes = headers.HBA_AdapterAttributes.create_from_string(buff) #pylint: disable-msg=E1101
         c_api.HBA_GetAdapterAttributes(adapter_handle, buff)
         return adapter_attributes
 
     def _get_port_attributes(self, adapter_handle, port_index):
         buffer = ctypes.c_buffer(headers.HBA_PortAttributes.min_max_sizeof().max) #pylint: disable-msg=W0622,E1101
         c_api.HBA_GetAdapterPortAttributes(adapter_handle, port_index, buffer)
-        port_attributes = headers.HBA_PortAttributes.create_instance_from_string(buffer) #pylint: disable-msg=E1101
+        port_attributes = headers.HBA_PortAttributes.create_from_string(buffer) #pylint: disable-msg=E1101
         return port_attributes
 
     def _get_remote_port_attributes(self, adapter_handle, port_index, remote_port_index):
         buff = ctypes.c_buffer(headers.HBA_PortAttributes.min_max_sizeof().max) #pylint: disable-msg=W0622,E1101
         c_api.HBA_GetDiscoveredPortAttributes(adapter_handle, port_index, remote_port_index, buff)
-        remote_port_attributes = headers.HBA_PortAttributes.create_instance_from_string(buff) #pylint: disable-msg=E1101
+        remote_port_attributes = headers.HBA_PortAttributes.create_from_string(buff) #pylint: disable-msg=E1101
         return remote_port_attributes
 
     def _get_remote_ports(self, adapter_handle, port_index, number_of_remote_ports):
         remote_ports = []
         for remote_port_index in range(0, number_of_remote_ports):
             remote_port_attributes = self._get_remote_port_attributes(adapter_handle, port_index, remote_port_index)
-            remote_ports.append(get_port_object(None, remote_port_attributes))
+            remote_port = get_port_object(None, remote_port_attributes)
+            log.debug("Found remote port {!r}".format(remote_port.port_wwn))
+            if remote_port.port_fcid in WELL_KNOWN_FC_ADDRESSES:
+                msg = "port {!r} is a well-known FC address with fcid {!r}"
+                log.debug(msg.format(remote_port.port_wwn, remote_port.port_fcid))
+            elif remote_port.port_state == 'offline':
+                msg = "remote port {!r} is offline"
+                log.debug(msg.format(remote_port.port_wwn))
+            else:
+                remote_ports.append(remote_port)
         return remote_ports
 
     def _populate_local_port_hct(self, port):
@@ -52,19 +79,19 @@ class HbaApi(Generator):
 
     def _get_local_port(self, adapter_handle, adapter_attributes, port_index):
         port_attributes = self._get_port_attributes(adapter_handle, port_index)
+        port = get_port_object(adapter_attributes, port_attributes)
+        logging.debug("checking local fc port {!r}".format(port.port_wwn))
+        self._populate_local_port_hct(port)
         wwn_buffer = self._extract_wwn_buffer_from_port_attributes(port_attributes)
         number_of_remote_ports = port_attributes.NumberOfDiscoveredPorts
         remote_ports = self._get_remote_ports(adapter_handle, port_index, number_of_remote_ports)
-        port_statistics = self._get_local_port_statistics(adapter_handle, port_index, wwn_buffer)
-        port_mappings = self._get_local_port_mappings(adapter_handle, wwn_buffer)
-        port = get_port_object(adapter_attributes, port_attributes)
         port.discovered_ports = remote_ports
+        port_statistics = self._get_local_port_statistics(adapter_handle, port_index, wwn_buffer)
         port.statistics = port_statistics
-        self._populate_local_port_hct(port)
+        port_mappings = self._get_local_port_mappings(adapter_handle, wwn_buffer)
         for remote_port in port.discovered_ports:
-            if remote_port.port_wwn not in port_mappings.keys():
-                continue
-            remote_port.hct = (port.hct[0],) + port_mappings[remote_port.port_wwn]
+            channel, target = port_mappings.get(remote_port.port_wwn, (-1, -1))
+            remote_port.hct = (port.hct[0], channel, target)
         return port
 
     def _get_local_port_statistics(self, adapter_handle, port_index, wwn_buffer):
@@ -73,12 +100,12 @@ class HbaApi(Generator):
 
         buffer = ctypes.c_buffer(headers.HBA_PortStatistics.min_max_sizeof().max) #pylint: disable-msg=W0622,E1101
         c_api.HBA_GetPortStatistics(adapter_handle, port_index, buffer)
-        hba_port_stats = headers.HBA_PortStatistics.create_instance_from_string(buffer) #pylint: disable-msg=E1101
+        hba_port_stats = headers.HBA_PortStatistics.create_from_string(buffer) #pylint: disable-msg=E1101
 
         try:
             buffer = ctypes.c_buffer(headers.HBA_FC4Statistics.min_max_sizeof().max) #pylint: disable-msg=W0622,E1101
             c_api.HBA_GetFC4Statistics(adapter_handle, wwn_buffer, 2, buffer)
-            hba_fc4_stats = headers.HBA_FC4Statistics.create_instance_from_string(buffer) #pylint: disable-msg=E1101
+            hba_fc4_stats = headers.HBA_FC4Statistics.create_from_string(buffer) #pylint: disable-msg=E1101
         except NotImplementedError:
             pass
         except RuntimeError, exception:
@@ -112,50 +139,63 @@ class HbaApi(Generator):
 
     def _mappings_to_dict(self, mappings):
         result = dict()
-        for entry in mappings.entries:
-            key = translate_wwn(entry.PortWWN)
-            value = (entry.ScsiBusNumber, entry.ScsiTargetNumber)
+        for entry in mappings.entry:
+            if entry.FcId.PortWWN == '':
+                log.debug("Found an empty mapping")
+                continue
+            log.debug("Found mapping {!r} to {!r}".format(entry.ScsiId, binascii.hexlify(entry.FcId.PortWWN)))
+            key = translate_wwn(entry.FcId.PortWWN)
+            value = (entry.ScsiId.ScsiBusNumber, entry.ScsiId.ScsiTargetNumber)
             result[key] = value
+        log.debug("{!r}".format(result))
         return result
 
+    def _extract_wwn_buffer_from_port_attributes(self, port_attributes):
+        return ctypes.c_uint64(headers.UNInt64.create_from_string(port_attributes.PortWWN))
+
+    def _build_empty_mappings_struct(self, number_of_elements):
+        element_size = headers.HBA_FcpScsiEntryV2.min_max_sizeof().max
+        entry = headers.HBA_FcpScsiEntryV2.create_from_string('\x00'*element_size)
+        struct = headers.HBA_FCPTargetMappingV2(NumberOfEntries=number_of_elements,
+                                                entry=[entry for index in range(number_of_elements)])
+        return struct
+
     def _get_local_port_mappings_count(self, adapter_handle, wwn_buffer):
-        mapping_buffer = ctypes.c_buffer(headers.HBA_FCPTargetMappingV2.min_max_sizeof().max)
+        struct = self._build_empty_mappings_struct(0)
+        size = struct.sizeof(struct)
+        mappings_buffer = ctypes.c_buffer('\x00'*size, size)
         try:
-            c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, mapping_buffer)
+            c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, mappings_buffer)
         except RuntimeError, exception:
             return_code = exception.args[0]
-            if return_code == headers.HBA_STATUS_ERROR_NOT_SUPPORTED:
-                return 0
             if return_code == headers.HBA_STATUS_ERROR_MORE_DATA:
-                pass
-            else:
-                raise
-        mappings = headers.HBA_FCPTargetMappingV2.create_instance_from_string(mapping_buffer)
-        return mappings.NumberOfEntries
-
-    def _extract_wwn_buffer_from_port_attributes(self, port_attributes):
-        class WWN(headers.Struct):
-            _fields_ = [headers.PortWWN]
-        wwn = WWN.create_instance_from_string('\x00' * 8)
-        wwn.PortWWN = port_attributes.PortWWN
-        wwn_buffer = WWN.instance_to_string(wwn)
-        return ctypes.c_buffer(wwn_buffer, 8)
+                return headers.UNInt32.create_from_string(mappings_buffer)
+        return 0
 
     def _get_local_port_mappings(self, adapter_handle, wwn_buffer):
-        number_of_entries = self._get_local_port_mappings_count(adapter_handle, wwn_buffer)
-
-        class HBA_FCPTargetMapping(headers.Struct): #pylint: disablemsg=C0103
-            _fields_ = [
-                    headers.UNInt32("NumberOfEntries"),
-                    headers.Padding(4),
-                    headers.Array("entries", number_of_entries + 1, headers.HBA_FcpScsiEntryV2)
-                    ]
-
-        mappings = HBA_FCPTargetMapping.create_instance_from_string('\x00' * HBA_FCPTargetMapping.min_max_sizeof().max)
-        mappings.NumberOfEntries = number_of_entries + 1
-        mapping_buffer = ctypes.c_buffer(HBA_FCPTargetMapping.instance_to_string(mappings), HBA_FCPTargetMapping.min_max_sizeof().max)
-        c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, mapping_buffer)
-        mappings = HBA_FCPTargetMapping.create_instance_from_string(mapping_buffer)
+        try:
+            number_of_entries = self._get_local_port_mappings_count(adapter_handle, wwn_buffer)
+            struct = self._build_empty_mappings_struct(number_of_entries)
+            size = struct.sizeof(struct)
+            mappings_buffer = ctypes.c_buffer(struct.write_to_string(struct), size)
+            c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, mappings_buffer)
+        except RuntimeError, exception:
+            msg ="failed to fetch port mappings for local wwn {!r}"
+            log.debug(msg.format(binascii.hexlify(wwn_buffer.raw)))
+            return_code = exception.args[0]
+            if return_code == headers.HBA_STATUS_ERROR_ILLEGAL_WWN:
+                log.debug("error code is HBA_STATUS_ERROR_ILLEGAL_WWN")
+                return {}
+            if return_code == headers.HBA_STATUS_ERROR_NOT_SUPPORTED:
+                log.debug("error code is HBA_STATUS_ERROR_NOT_SUPPORTED")
+                return {}
+            if return_code == headers.HBA_STATUS_ERROR_MORE_DATA:
+                return self._get_local_port_mappings(adapter_handle, wwn_buffer,
+                                                     buffer_size*2)
+            else:
+                raise
+        
+        mappings = headers.HBA_FCPTargetMappingV2.create_from_string(mappings_buffer)
         return self._mappings_to_dict(mappings)
 
     def iter_ports(self):
@@ -169,6 +209,7 @@ class HbaApi(Generator):
                         logging.debug("found a weird host bus adapter, named: %s", adapter_name.value)
                         continue
                     for port_index in range(0, adapter_attributes.NumberOfPorts):
+                        log.debug("yield port index {} for adapter name {}".format(port_index, adapter_name))
                         local_port = self._get_local_port(adapter_handle, adapter_attributes, port_index)
                         yield local_port
 
@@ -198,8 +239,10 @@ class HbaApi(Generator):
             c_api.HBA_CloseAdapter(handle)
 
 def translate_wwn(source):
-    from infi.dtypes.wwn import WWN
-    return WWN(':'.join([hex(item).lstrip('0x').zfill(2) for item in source]))
+    return WWN(binascii.hexlify(source if source != '' else '\x00'*8))
+
+def translate_port_type(number):
+    return headers.HBA_PORTTYPE[str(number)]
 
 def translate_port_speed(source):
     """ PortSpeed indicates the signalling bit rate at which this port is currently operating.
@@ -256,6 +299,7 @@ def get_port_object(adapter_attributes=Bunch(), port_attributes=Bunch()):
                                        getattr(port_attributes, "NodeWWN", None))
     kwargs['port_wwn'] = translate_wwn(getattr(port_attributes, "PortWWN"))
     kwargs['port_fcid'] = getattr(port_attributes, "PortFcId")
+    kwargs['port_type'] = translate_port_type(getattr(port_attributes, "PortType"))
     kwargs['port_state'] = translate_port_state(getattr(port_attributes, "PortState"))
     kwargs['port_speed'] = translate_port_speed(getattr(port_attributes, "PortSpeed"))
     kwargs['port_symbolic_name'] = getattr(port_attributes, "PortSymbolicName").strip('\x00')

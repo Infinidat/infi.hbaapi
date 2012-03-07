@@ -3,8 +3,8 @@ import ctypes
 import glob
 import sys
 from . import headers
-from infi.crap import WrappedFunction, get_os_name, errcheck_zero, errcheck_nonzero, errcheck_nothing
-from infi.crap import IN, IN_OUT
+from infi.cwrap import WrappedFunction, get_os_name, errcheck_zero, errcheck_nonzero, errcheck_nothing
+from infi.cwrap import IN, IN_OUT
 
 HBAAPI_SHARED_LIBRARY_FILENAMES = {
     'windows': 'hbaapi.dll',
@@ -33,6 +33,10 @@ def errcheck_inconsistency(errcheck_func=errcheck_nonzero):
     return errcheck
 
 class HbaApiFunction(WrappedFunction):
+    @classmethod
+    def _get_function_type(cls):
+        return 'CFUNCTYPE'
+
     @classmethod
     def _get_library(cls):
         library_name = HBAAPI_SHARED_LIBRARY_FILENAMES.get(get_os_name(), None)
@@ -105,7 +109,7 @@ class HBA_GetAdapterName(HbaApiFunction): #pylint: disable-msg=C0103
     @classmethod
     def get_parameters(cls):
         return (headers.UINT32, IN, 'adapterIndex'), \
-            (ctypes.POINTER(ctypes.c_char), IN_OUT, 'adapterName')
+            (ctypes.POINTER(ctypes.c_char), IN, 'adapterName')
 
 class HBA_OpenAdapter(HbaApiFunction): #pylint: disable-msg=C0103
     return_value = headers.HBA_HANDLE
@@ -189,7 +193,7 @@ class HBA_GetFC4Statistics(HbaApiFunction): #pylint: disable-msg=C0103
     @classmethod
     def get_parameters(cls):
         return ((headers.HBA_HANDLE, IN, 'handle'),
-                (ctypes.c_void_p, IN, 'portWWN'),
+                (ctypes.c_uint64, IN, 'portWWN'),
                 (ctypes.c_uint8, IN, 'FC4type'),
                 (ctypes.c_void_p, IN_OUT, 'fcpStatistics'))
 
@@ -203,5 +207,6 @@ class HBA_GetFcpTargetMappingV2(HbaApiFunction): #pylint: disable-msg=C0103
     @classmethod
     def get_parameters(cls):
         return ((headers.HBA_HANDLE, IN, "handle"),
-                (ctypes.c_void_p, IN, "hbaPortWWN"),
+                (ctypes.c_uint64, IN, "hbaPortWWN"),
                 (ctypes.c_void_p, IN_OUT, "pMapping"))
+

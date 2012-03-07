@@ -63,8 +63,14 @@ class Sysfs(Generator):
             yield path, relpath(path, FC_HOST_BASEPATH).replace('host', '')
 
     def _iter_remote_fc_ports(self, fc_host_path):
-        for path in glob(join(fc_host_path, 'device', 'rport*', 'fc_remote_ports*')):
-            yield path
+        for rport in glob(join(fc_host_path, 'device', 'rport*')):
+            if exists(join(rport, 'fc_remote_ports')):
+                # this is how its on ubuntu
+                for path in glob(join(rport, 'fc_remote_ports', '*')):
+                    yield path
+            else:
+                for path in glob(join(rport, 'fc_remote_ports*')):
+                    yield path
 
     def get_file_content(self, filepath):
         # The purpose of this method is to return the file's content with no exceptions.
@@ -97,18 +103,21 @@ class Sysfs(Generator):
 	self._populate_local_port_hct(port, base_path)
 
     def _populate_port_attributes_from_scsi_host(self, port, base_path):
-        port.model = self.get_file_content(join(base_path, 'model_name'))
-        port.model_description = self.get_file_content(join(base_path, 'model_desc*'))
-        port.driver_version = self.get_file_content(join(base_path, 'driver_version'))
-        port.serial_number = self.get_file_content(join(base_path, 'serial_num'))
-        port.hardware_version = self.get_file_content(join(base_path, 'fw_version'))
-        port.option_rom_version = self.get_file_content(join(base_path, 'optrom_fw_version'))
+        port.model = self.get_file_content(join(base_path, 'model*name'))
+        port.model_description = self.get_file_content(join(base_path, 'model*desc*'))
+        port.driver_version = self.get_file_content(join(base_path, '*dr*v*_version'))
+        port.serial_number = self.get_file_content(join(base_path, 'serial*num'))
+        port.hardware_version = self.get_file_content(join(base_path, 'fw*e*'))
+        port.option_rom_version = self.get_file_content(join(base_path, 'optrom_*_version'))
 
     def _populate_remote_port_hct(self, port, base_path, local_port):
         from re import compile
         pattern = compile(r"(?P<host>\d+)[^\d](?P<channel>\d+)[^\d](?P<target>\d)")
         result = pattern.search(base_path).groupdict()
-        port.hct = (local_port.hct[0], int(result['channel']), int(result['target']))
+        # TODO get the target number from the scsi_target_id_file inside base_path
+        target_path = join(base_path, "scsi_target_id")
+        target_id = open(target_path).read().strip("\n").strip() if exists(target_path) else "-1"
+        port.hct = (local_port.hct[0], int(result['channel']), int(target_id))
 
     def _populate_local_port_hct(self, port, base_path):
         from re import compile
@@ -134,6 +143,12 @@ class Sysfs(Generator):
         for remote_fc_port_path in self._iter_remote_fc_ports(fc_host_path):
             remote_port = Port()
             self._populate_remote_port_attributes_from_fc_host(remote_port, remote_fc_port_path, port)
+            if remote_port.hct[2] == -1:
+                # this is not a real target, just a switch port
+                continue
+            if remote_port.port_state == "not present":
+                # this port is no longer connected
+                continue
             port.discovered_ports.append(remote_port)
 
     def iter_ports(self):
