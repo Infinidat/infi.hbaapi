@@ -12,6 +12,19 @@ import binascii
 
 log = logging.getLogger()
 
+WELL_KNOWN_FC_ADDRESSES = [
+    0xFFFFF5, # Multicast server
+    0xFFFFF6, # Clock Sync server
+    0xFFFFF7, # KDC (key distribution)
+    0xFFFFF8, # Alias server (for multicast, or hunt groups)
+    0xFFFFF9, # QoS information
+    0xFFFFFA, # Management server
+    0xFFFFFB, # Time server
+    0xFFFFFC, # Directory server
+    0xFFFFFD, # Fabric Controller
+    0xFFFFFE, # Fabric Login server
+]
+
 class HbaApi(Generator):
     def __init__(self):
         Generator.__init__(self)
@@ -48,7 +61,14 @@ class HbaApi(Generator):
             remote_port_attributes = self._get_remote_port_attributes(adapter_handle, port_index, remote_port_index)
             remote_port = get_port_object(None, remote_port_attributes)
             log.debug("Found remote port {!r}".format(remote_port.port_wwn))
-            remote_ports.append(remote_port)
+            if remote_port.port_fcid in WELL_KNOWN_FC_ADDRESSES:
+                msg = "port {!r} is a well-known FC address with fcid {!r}"
+                log.debug(msg.format(remote_port.port_wwn, remote_port.port_fcid))
+            elif remote_port.port_state == 'offline':
+                msg = "remote port {!r} is offline"
+                log.debug(msg.format(remote_port.port_wwn))
+            else:
+                remote_ports.append(remote_port)
         return remote_ports
 
     def _populate_local_port_hct(self, port):

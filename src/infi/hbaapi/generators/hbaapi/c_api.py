@@ -3,8 +3,8 @@ import ctypes
 import glob
 import sys
 from . import headers
-from infi.crap import WrappedFunction, get_os_name, errcheck_zero, errcheck_nonzero, errcheck_nothing
-from infi.crap import IN, IN_OUT
+from infi.cwrap import WrappedFunction, get_os_name, errcheck_zero, errcheck_nonzero, errcheck_nothing
+from infi.cwrap import IN, IN_OUT
 
 HBAAPI_SHARED_LIBRARY_FILENAMES = {
     'windows': 'hbaapi.dll',

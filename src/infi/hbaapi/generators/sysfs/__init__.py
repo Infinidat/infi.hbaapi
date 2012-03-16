@@ -146,6 +146,9 @@ class Sysfs(Generator):
             if remote_port.hct[2] == -1:
                 # this is not a real target, just a switch port
                 continue
+            if remote_port.port_state == "not present":
+                # this port is no longer connected
+                continue
             port.discovered_ports.append(remote_port)
 
     def iter_ports(self):
