@@ -10,6 +10,8 @@ from os.path import exists, join, sep, dirname, pardir, abspath
 from ... import hbaapi
 from .. import headers, c_api
 
+logger = logging.getLogger(__name__)
+
 def _translate_wwn(source):
     return ''.join([chr(item) for item in source])
 
@@ -292,12 +294,10 @@ class GeneratorTestCase(unittest.TestCase):
                     self._mock_get_adapter_name(),
                     self._mock_open_close_adapter(),
                     self._mock_get_adapter_attributes(),
-                    mock.patch("logging.debug"),
-                    ) as (_, _, _, _, api_mock, debug):
+                    ) as (_, _, _, _, api_mock):
             from .. import HbaApi
             ports = [port for port in HbaApi().iter_ports()]
             self.assertEquals(1, api_mock.call_count)
-            self.assertEquals(1, debug.call_count)
 
     def test_mock(self):
         with nested(

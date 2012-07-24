@@ -2,6 +2,7 @@
 import unittest
 import mock
 import logging
+logger = logging.getLogger(__name__)
 
 #pylint: disable-all
 
@@ -59,7 +60,7 @@ class PortAssertions(object):
         import re
         from infi.dtypes.wwn import WWN
         from .. import WWN_PATTERN
-        logging.debug(wwn)
+        logger.debug(wwn)
         self.test_case.assertIsNotNone(wwn)
         self.test_case.assertIsInstance(wwn, WWN)
 

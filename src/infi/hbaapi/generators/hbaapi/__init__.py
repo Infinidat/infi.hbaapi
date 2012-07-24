@@ -10,7 +10,7 @@ from infi.dtypes.wwn import WWN
 import c_api, headers
 import binascii
 
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 
 WELL_KNOWN_FC_ADDRESSES = [
     0xFFFFF5, # Multicast server

@@ -8,6 +8,8 @@ import mock
 from os.path import exists, join, sep, dirname, pardir, abspath
 from ... import sysfs
 
+logger = logging.getLogger(__name__)
+
 MOCK_ROOT_FS = abspath(join(dirname(__file__), pardir, pardir, pardir, pardir, pardir, pardir, 'mock_fs', 'redhat_no_remote_ports'))
 REMOTE_PORTS_MOCK_ROOT_FS = abspath(join(dirname(__file__), pardir, pardir, pardir, pardir, pardir, pardir, 'mock_fs', 'mock_fs_hbaapi-5'))
 
@@ -24,7 +26,7 @@ class GeneratorTestCase(unittest.TestCase):
     @mock.patch.object(sysfs, 'ROOT_FS' , MOCK_ROOT_FS)
     def test_mock_fs(self):
         from infi.hbaapi.tests import PortAssertions
-        logging.debug("mock_fs = %s", MOCK_ROOT_FS)
+        logger.debug("mock_fs = %s", MOCK_ROOT_FS)
         self.assertIs(sysfs.ROOT_FS, MOCK_ROOT_FS)
         self.assertTrue(sysfs.Sysfs.is_available())
         ports = [port for port in sysfs.Sysfs().iter_ports()]
@@ -45,7 +47,7 @@ class RemotePortsTestCase(unittest.TestCase):
     @mock.patch.object(sysfs, 'ROOT_FS' , REMOTE_PORTS_MOCK_ROOT_FS)
     def test_mock_fs(self):
         raise unittest.SkipTest("the mocked filesystem was removed because windows filesystem")
-        logging.debug("mock_fs = %s", REMOTE_PORTS_MOCK_ROOT_FS)
+        logger.debug("mock_fs = %s", REMOTE_PORTS_MOCK_ROOT_FS)
         self.assertIs(sysfs.ROOT_FS, REMOTE_PORTS_MOCK_ROOT_FS)
         self.assertTrue(sysfs.Sysfs.is_available())
         self._assert_remote_ports()
