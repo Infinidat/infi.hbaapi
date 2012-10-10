@@ -99,7 +99,11 @@ class HbaApi(Generator):
         hba_port_stats, hba_fc4_stats = None, None
 
         buffer = ctypes.c_buffer(headers.HBA_PortStatistics.min_max_sizeof().max) #pylint: disable-msg=W0622,E1101
-        c_api.HBA_GetPortStatistics(adapter_handle, port_index, buffer)
+        try:
+            c_api.HBA_GetPortStatistics(adapter_handle, port_index, buffer)
+        except RuntimeError:
+            # Default QLogic drivers on Windows don't support this function - return defaults
+            return port_statistics
         hba_port_stats = headers.HBA_PortStatistics.create_from_string(buffer) #pylint: disable-msg=E1101
 
         try:
