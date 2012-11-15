@@ -259,12 +259,7 @@ def translate_port_speed(source):
                    headers.HBA_PORTSPEED_4GBIT: 4,
                    headers.HBA_PORTSPEED_8GBIT: 8,
                    }
-    keys = translation.keys()
-    keys.sort()
-    keys.reverse()
-    for key in keys:
-        if source == translation[key]:
-            return translation[key]
+    return translation[source]
 
 def translate_port_supported_speeds(source):
     """ PortSupportedSpeed indicates the signalling bit rates at which this port may operate.
@@ -277,8 +272,7 @@ def translate_port_supported_speeds(source):
                    headers.HBA_PORTSPEED_8GBIT: 8,
                    }
     keys = translation.keys()
-    keys.sort()
-    keys.reverse()
+    keys.sort(reverse=True)
     for key in keys:
         if key & source:
             result.append(translation[key])
