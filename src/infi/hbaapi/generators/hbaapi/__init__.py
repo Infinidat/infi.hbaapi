@@ -185,7 +185,7 @@ class HbaApi(Generator):
             c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, mappings_buffer)
         except RuntimeError, exception:
             msg ="failed to fetch port mappings for local wwn {!r}"
-            log.debug(msg.format(binascii.hexlify(wwn_buffer.raw)))
+            log.debug(msg.format(binascii.hexlify(wwn_buffer)))
             return_code = exception.args[0]
             if return_code == headers.HBA_STATUS_ERROR_ILLEGAL_WWN:
                 log.debug("error code is HBA_STATUS_ERROR_ILLEGAL_WWN")
@@ -194,11 +194,10 @@ class HbaApi(Generator):
                 log.debug("error code is HBA_STATUS_ERROR_NOT_SUPPORTED")
                 return {}
             if return_code == headers.HBA_STATUS_ERROR_MORE_DATA:
-                return self._get_local_port_mappings(adapter_handle, wwn_buffer,
-                                                     buffer_size*2)
+                return {}  # NPIV ports seem to always return this
             else:
                 raise
-        
+
         mappings = headers.HBA_FCPTargetMappingV2.create_from_string(mappings_buffer)
         return self._mappings_to_dict(mappings)
 
