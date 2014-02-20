@@ -2,7 +2,7 @@ __import__("pkg_resources").declare_namespace(__name__)
 
 import logging
 from contextlib import contextmanager
-from bunch import Bunch
+from munch import Munch
 import ctypes
 from .. import Generator
 from ... import Port, PortStatistics, FC_PORT_STATISTICS
@@ -219,7 +219,7 @@ class HbaApi(Generator):
     @classmethod
     def is_available(cls):
         try:
-            c_api.HBA_GetVersion._get_function() #pylint: disable-msg=W0212,E1101 
+            c_api.HBA_GetVersion._get_function() #pylint: disable-msg=W0212,E1101
             return True
         except OSError:
             pass
@@ -290,7 +290,7 @@ def translate_port_state(source):
                    headers.HBA_PORTSTATE_LOOPBACK: 'lookback'}
     return translation[source]
 
-def get_port_object(adapter_attributes=Bunch(), port_attributes=Bunch()):
+def get_port_object(adapter_attributes=Munch(), port_attributes=Munch()):
     kwargs = {}
     kwargs['node_wwn'] = translate_wwn(getattr(adapter_attributes, "NodeWWN", None) or \
                                        getattr(port_attributes, "NodeWWN", None))

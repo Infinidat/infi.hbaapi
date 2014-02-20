@@ -1,7 +1,7 @@
 __import__("pkg_resources").declare_namespace(__name__)
 
 from contextlib import contextmanager
-from bunch import Bunch
+from munch import Munch
 import ctypes
 from .. import Generator
 from ... import Port, PortStatistics, FC_PORT_STATISTICS
