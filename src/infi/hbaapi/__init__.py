@@ -13,7 +13,7 @@ the PortAssertions class in the tests modules
 """ #pylint: disable-msg=W0105
 
 
-from bunch import Bunch
+from munch import Munch
 
 WWN_OCTECT = '[0-9a-fA-F]{2}'
 WWN_PATTERN = r'.*' + r'(?:0x)?' + r'[:-]?'.join(['(%s)' % WWN_OCTECT] * 8) + r'.*'
@@ -32,12 +32,12 @@ FC_PORT_STATISTICS = ['dumped_frames', 'error_frames', 'fcp_control_requests', '
                       'loss_of_sync_count', 'nos_count', 'primitive_seq_protocol_err_count',
                       'rx_frames', 'rx_words', 'seconds_since_last_reset', 'tx_frames', 'tx_words']
 
-class Port(Bunch):
+class Port(Munch):
     """ Representation of a HBA port.
     For the list of available attributes, see the FC_PORT_ATTRIBUTES list
     """
     def __init__(self):
-        Bunch.__init__(self)
+        Munch.__init__(self)
         self._set_defaults()
 
     def _set_defaults(self):
