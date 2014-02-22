@@ -40,3 +40,4 @@ src/infi/hbaapi/__version__.py
 .achievements
 bootstrap.py
 .cache
+eggs
