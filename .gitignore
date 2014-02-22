@@ -39,3 +39,4 @@ src/infi/hello/__version__.py
 src/infi/hbaapi/__version__.py
 .achievements
 bootstrap.py
+.cache
