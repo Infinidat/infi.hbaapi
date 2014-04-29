@@ -132,8 +132,7 @@ class Sysfs(Generator):
     def _populate_port_statistics_from_fc_host(self, port, base_path):
         # currently, FC_PORT_STATISTICS match the files in sysfs, so its easy to this
         stats = PortStatistics()
-        for stat_name in FC_PORT_STATISTICS:
-            # cat on these files takes forever, disabling for now
+        # cat on these files takes forever, disabling for now
         port.statistics = stats
 
     def _populate_discovered_ports(self, port, fc_host_path):
