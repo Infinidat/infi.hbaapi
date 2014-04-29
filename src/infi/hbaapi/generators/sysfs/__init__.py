@@ -132,10 +132,7 @@ class Sysfs(Generator):
     def _populate_port_statistics_from_fc_host(self, port, base_path):
         # currently, FC_PORT_STATISTICS match the files in sysfs, so its easy to this
         stats = PortStatistics()
-        for stat_name in FC_PORT_STATISTICS:
-            stat_value = self.get_file_content(join(base_path, 'statistics', stat_name))
-            # only one name is fucked up here
-            setattr(stats, stat_name.replace('prim', 'primitive'), translate_stat_value_to_number(stat_value))
+        # cat on these files takes forever, disabling for now
         port.statistics = stats
 
     def _populate_discovered_ports(self, port, fc_host_path):
