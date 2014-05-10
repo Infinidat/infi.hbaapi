@@ -112,7 +112,7 @@ class Sysfs(Generator):
 
     def _populate_remote_port_hct(self, port, base_path, local_port):
         from re import compile
-        pattern = compile(r"(?P<host>\d+)[^\d](?P<channel>\d+)[^\d](?P<target>\d)")
+        pattern = compile(r"(?P<host>\d+)[^\d](?P<channel>\d+)[^\d](?P<target>\d+)")
         result = pattern.search(base_path).groupdict()
         # TODO get the target number from the scsi_target_id_file inside base_path
         target_path = join(base_path, "scsi_target_id")
