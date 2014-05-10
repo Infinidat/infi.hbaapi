@@ -100,7 +100,7 @@ class Sysfs(Generator):
                                                 self.get_file_content(join(base_path, 'supported_speeds')))
         port.fabric_name = translate_wwn(self.get_file_content(join(base_path, 'fabric_name')))
         port.port_symbolic_name = self.get_file_content(join(base_path, 'symbolic_name'))
-	self._populate_local_port_hct(port, base_path)
+    	self._populate_local_port_hct(port, base_path)
 
     def _populate_port_attributes_from_scsi_host(self, port, base_path):
         port.model = self.get_file_content(join(base_path, 'model*name'))
