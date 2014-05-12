@@ -28,6 +28,7 @@ class CompositeGenerator(Generator):
                 except:
                     logger.exception("hbaapi generator raised an exception, skipping this port")
                     continue
+
     @classmethod
     def is_available(cls):
         return True
