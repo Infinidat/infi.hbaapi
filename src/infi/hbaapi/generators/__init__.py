@@ -1,5 +1,10 @@
 __import__("pkg_resources").declare_namespace(__name__)
 
+
+from logging import getLogger
+logger = getLogger(__name__)
+
+
 class Generator(object):
     def __init__(self):
         object.__init__(self)
@@ -18,7 +23,11 @@ class CompositeGenerator(Generator):
     def iter_ports(self):
         for child in self._children:
             for port in child().iter_ports():
-                yield port
+                try:
+                    yield port
+                except:
+                    logger.exception("hbaapi generator raised an exception, skipping this port")
+                    continue
 
     @classmethod
     def is_available(cls):
