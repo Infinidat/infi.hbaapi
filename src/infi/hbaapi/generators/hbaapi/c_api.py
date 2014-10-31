@@ -4,12 +4,14 @@ import glob
 import sys
 from . import headers
 from infi.cwrap import WrappedFunction, get_os_name, errcheck_zero, errcheck_nonzero, errcheck_nothing
-from infi.cwrap import IN, IN_OUT
+from infi.cwrap import IN, IN_OUT, wrap_library_function
 
 HBAAPI_SHARED_LIBRARY_FILENAMES = {
     'windows': 'hbaapi.dll',
     'linux': (glob.glob('/usr/lib64/libHBAAPI.so*' if sys.maxsize > 2 ** 32 \
-                        else '/usr/lib/libHBAAPI.so*') + ['libHBAAPI.so'])[0]
+                        else '/usr/lib/libHBAAPI.so*') + ['libHBAAPI.so'])[0],
+    'sunos': (glob.glob('/usr/lib64/libsun_fc.so*' if sys.maxsize > 2 ** 32 \
+                        else '/usr/lib/libsun_fc.so*') + ['libsun_fc.so'])[0]
     }
 
 class InconsistencyError(Exception):
@@ -46,6 +48,17 @@ class HbaApiFunction(WrappedFunction):
             return ctypes.cdll.LoadLibrary(library_name)
         except:
             raise OSError
+
+    @classmethod
+    def _get_fncution(cls):
+        # Solaris HBA library exported functions have Sun_fc prefix instead of HBA_, so we add this hack
+        if get_os_name() == 'sunos':
+            parameters = cls.get_parameters()
+            function = wrap_library_function(cls.__name__.replace("HBA_", "Sun_fc"), cls._get_library(), cls._get_function_type(),
+                                             cls.return_value, parameters, cls.get_errcheck())
+            return function
+        else:
+            return super(HbaApiFunction, cls)._get_function()
 
 # Library Control Functions
 
