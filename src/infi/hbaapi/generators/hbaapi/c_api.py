@@ -50,7 +50,7 @@ class HbaApiFunction(WrappedFunction):
             raise OSError
 
     @classmethod
-    def _get_fncution(cls):
+    def _get_function(cls):
         # Solaris HBA library exported functions have Sun_fc prefix instead of HBA_, so we add this hack
         if get_os_name() == 'sunos':
             parameters = cls.get_parameters()
