@@ -39,6 +39,7 @@ class TestCase(unittest.TestCase):
     def test_real_thing(self):
         from .. import get_ports_collection
         ports = [port for port in get_ports_collection().iter_ports()]
+        self.assertGreater(len(ports), 0)
 
     @mock.patch("infi.hbaapi.generators.get_list_of_generators")
     def test_with_mock_generator(self, mock):
