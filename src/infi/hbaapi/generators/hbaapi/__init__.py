@@ -147,7 +147,7 @@ class HbaApi(Generator):
             if entry.FcId.PortWWN == '':
                 log.debug("Found an empty mapping")
                 continue
-            log.debug("Found mapping {!r} to {!r}".format(entry.ScsiId, binascii.hexlify(entry.FcId.PortWWN)))
+            log.debug("Found mapping {!r} to {!r}".format(entry.ScsiId, entry.FcId.PortWWN))
             key = translate_wwn(entry.FcId.PortWWN)
             value = (entry.ScsiId.ScsiBusNumber, entry.ScsiId.ScsiTargetNumber)
             result[key] = value
@@ -155,7 +155,8 @@ class HbaApi(Generator):
         return result
 
     def _extract_wwn_buffer_from_port_attributes(self, port_attributes):
-        return ctypes.c_uint64(headers.UNInt64.create_from_string(port_attributes.PortWWN))
+        wwn_string = ''.join([chr(item) for item in port_attributes.PortWWN])
+        return ctypes.c_uint64(headers.UNInt64.create_from_string(wwn_string))
 
     def _build_empty_mappings_struct(self, number_of_elements):
         element_size = headers.HBA_FcpScsiEntryV2.min_max_sizeof().max
@@ -245,6 +246,7 @@ class HbaApi(Generator):
             c_api.HBA_CloseAdapter(handle)
 
 def translate_wwn(source):
+    source = ''.join([chr(item) for item in source])
     return WWN(binascii.hexlify(source if source != '' else '\x00'*8))
 
 def translate_port_type(number):
