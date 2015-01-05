@@ -219,8 +219,8 @@ class HbaApi(Generator):
 
     @classmethod
     def is_available(cls):
-        from os import name
-        if name != 'nt':
+        from infi.os_info import get_platform_string
+        if get_platform_string().split('-')[0] not in ('windows', 'solaris'):
             return False
         try:
             c_api.HBA_GetVersion._get_function() #pylint: disable-msg=W0212,E1101
