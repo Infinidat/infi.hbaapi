@@ -28,7 +28,7 @@ HBA_COS = HBA_UINT32
 BitsArray = Array('bits', 32, UNInt8)
 
 def HBA_WWN(name):
-    return String(name, 8)
+    return Array(name, 8, UNInt8)
 
 PortSupportedFc4Types = Array("PortSupportedFc4Types", 32, UNInt8)
 PortActiveFc4Types = Array("PortActiveFc4Types", 32, UNInt8)
