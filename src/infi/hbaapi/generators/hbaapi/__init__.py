@@ -40,7 +40,6 @@ class HbaApi(Generator):
         buff = ctypes.c_buffer(headers.HBA_AdapterAttributes.min_max_sizeof().max) #pylint: disable-msg=W0622,E1101
         c_api.HBA_GetAdapterAttributes(adapter_handle, buff)
         adapter_attributes = headers.HBA_AdapterAttributes.create_from_string(buff) #pylint: disable-msg=E1101
-        c_api.HBA_GetAdapterAttributes(adapter_handle, buff)
         return adapter_attributes
 
     def _get_port_attributes(self, adapter_handle, port_index):
