@@ -40,7 +40,6 @@ class HbaApi(Generator):
         buff = ctypes.c_buffer(headers.HBA_AdapterAttributes.min_max_sizeof().max) #pylint: disable-msg=W0622,E1101
         c_api.HBA_GetAdapterAttributes(adapter_handle, buff)
         adapter_attributes = headers.HBA_AdapterAttributes.create_from_string(buff) #pylint: disable-msg=E1101
-        c_api.HBA_GetAdapterAttributes(adapter_handle, buff)
         return adapter_attributes
 
     def _get_port_attributes(self, adapter_handle, port_index):
@@ -115,6 +114,8 @@ class HbaApi(Generator):
         except RuntimeError, exception:
             return_code = exception.args[0]
             if return_code in [headers.HBA_STATUS_ERROR_UNSUPPORTED_FC4, headers.HBA_STATUS_ERROR_ILLEGAL_WWN]:
+                pass
+            elif return_code in [3969908768]: # this is what the cisco fnic drivers returns on Windows
                 pass
             else:
                 raise

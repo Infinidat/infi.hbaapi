@@ -25,8 +25,6 @@ HBA_COS = HBA_UINT32
 # Structures #
 ##############
 
-BitsArray = Array('bits', 32, UNInt8)
-
 def HBA_WWN(name):
     return Array(name, 8, UNInt8)
 
