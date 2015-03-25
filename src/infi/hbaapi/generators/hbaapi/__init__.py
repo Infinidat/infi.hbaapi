@@ -115,10 +115,7 @@ class HbaApi(Generator):
             return_code = exception.args[0]
             if return_code in [headers.HBA_STATUS_ERROR_UNSUPPORTED_FC4, headers.HBA_STATUS_ERROR_ILLEGAL_WWN]:
                 pass
-            elif return_code in [3969908768]: # this is what the cisco fnic drivers returns on Windows
-                pass
-            else:
-                raise
+            log.debug("HBA_GetFC4Statistics returned {0}".format(return_code))
 
         self._merge_statistics(port_statistics, hba_port_stats, hba_fc4_stats)
         return port_statistics
