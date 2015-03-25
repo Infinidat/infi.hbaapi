@@ -114,4 +114,7 @@ def get_ports_collection():
         collection.add_port(port)
     return collection
 
+def get_ports():
+    return get_ports_collections().get_ports()
+
 __all__ = ['get_ports_collection', ]
