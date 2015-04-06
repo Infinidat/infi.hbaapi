@@ -1,6 +1,7 @@
 __import__("pkg_resources").declare_namespace(__name__)
 
 import logging
+from infi.os_info import get_platform_string
 from contextlib import contextmanager
 from munch import Munch
 import ctypes
@@ -144,6 +145,11 @@ class HbaApi(Generator):
                 _merge_hba_port_stat(name)
 
     def _mappings_to_dict(self, mappings):
+        def get_target_number(entry):
+            if "solaris" in get_platform_string():
+                return int(translate_wwn(entry.FcId.PortWWN)._address, 16)
+            return entry.ScsiId.ScsiTargetNumber
+
         result = dict()
         for entry in mappings.entry:
             if entry.FcId.PortWWN == '':
@@ -151,7 +157,7 @@ class HbaApi(Generator):
                 continue
             log.debug("Found mapping {!r} to {!r}".format(entry.ScsiId, entry.FcId.PortWWN))
             key = translate_wwn(entry.FcId.PortWWN)
-            value = (entry.ScsiId.ScsiBusNumber, entry.ScsiId.ScsiTargetNumber)
+            value = (entry.ScsiId.ScsiBusNumber, get_target_number(entry))
             result[key] = value
         log.debug("{!r}".format(result))
         return result
