@@ -42,3 +42,4 @@ bootstrap.py
 .cache
 eggs
 parts
+src/infi/hbaapi/generators/hbaapi/_hbaapi_aix.so
