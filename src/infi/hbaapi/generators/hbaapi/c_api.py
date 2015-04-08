@@ -62,7 +62,7 @@ class HbaApiFunction(WrappedFunction):
             function = wrap_library_function(cls.__name__.replace("HBA_", "Sun_fc"), cls._get_library(), cls._get_function_type(),
                                              cls.return_value, parameters, cls.get_errcheck())
             return function
-        elif get_os_name() == 'aix':
+        elif 'aix' in get_platform_string():
             parameters = cls.get_parameters()
             function = wrap_library_function(cls.__name__.replace("HBA_", "PyHBA_"), cls._get_library(), cls._get_function_type(),
                                              cls.return_value, parameters, cls.get_errcheck())
