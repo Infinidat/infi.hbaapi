@@ -40,7 +40,14 @@ if SETUP_INFO['url'] is None:
 def setup():
     from setuptools import setup as _setup
     from setuptools import find_packages
+    from setuptools import Extension
+    import platform
     SETUP_INFO['packages'] = find_packages('src')
+    if platform.system() == "AIX":
+        aix_extension = Extension('infi.hbaapi.generators.hbaapi._hbaapi_aix',
+            sources=['src/infi/hbaapi/generators/hbaapi/_hbaapi_aix.c'],
+            libraries=['HBAAPI'])
+        SETUP_INFO['ext_modules'] = [aix_extension]
     _setup(**SETUP_INFO)
 
 if __name__ == '__main__':

@@ -1,6 +1,7 @@
 __import__("pkg_resources").declare_namespace(__name__)
 
 import logging
+from infi.os_info import get_platform_string
 from contextlib import contextmanager
 from munch import Munch
 import ctypes
@@ -9,6 +10,7 @@ from ... import Port, PortStatistics, FC_PORT_STATISTICS
 from infi.dtypes.wwn import WWN
 import c_api, headers
 import binascii
+import sys
 
 log = logging.getLogger(__name__)
 
@@ -90,6 +92,9 @@ class HbaApi(Generator):
         port_mappings = self._get_local_port_mappings(adapter_handle, wwn_buffer)
         for remote_port in port.discovered_ports:
             channel, target = port_mappings.get(remote_port.port_wwn, (-1, -1))
+            if sys.platform.startswith("aix"):
+                # hack! couldn't find target number used by OS, so using the wwn as target number :()
+                target = int(str(remote_port.node_wwn), 16)
             remote_port.hct = (port.hct[0], channel, target)
         return port
 
@@ -140,6 +145,11 @@ class HbaApi(Generator):
                 _merge_hba_port_stat(name)
 
     def _mappings_to_dict(self, mappings):
+        def get_target_number(entry):
+            if "solaris" in get_platform_string():
+                return int(translate_wwn(entry.FcId.PortWWN)._address, 16)
+            return entry.ScsiId.ScsiTargetNumber
+
         result = dict()
         for entry in mappings.entry:
             if entry.FcId.PortWWN == '':
@@ -147,7 +157,7 @@ class HbaApi(Generator):
                 continue
             log.debug("Found mapping {!r} to {!r}".format(entry.ScsiId, entry.FcId.PortWWN))
             key = translate_wwn(entry.FcId.PortWWN)
-            value = (entry.ScsiId.ScsiBusNumber, entry.ScsiId.ScsiTargetNumber)
+            value = (entry.ScsiId.ScsiBusNumber, get_target_number(entry))
             result[key] = value
         log.debug("{!r}".format(result))
         return result
@@ -218,7 +228,7 @@ class HbaApi(Generator):
     @classmethod
     def is_available(cls):
         from infi.os_info import get_platform_string
-        if get_platform_string().split('-')[0] not in ('windows', 'solaris'):
+        if get_platform_string().split('-')[0] not in ('windows', 'solaris', 'aix'):
             return False
         try:
             c_api.HBA_GetVersion._get_function() #pylint: disable-msg=W0212,E1101
