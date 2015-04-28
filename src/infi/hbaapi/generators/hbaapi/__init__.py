@@ -73,10 +73,15 @@ class HbaApi(Generator):
         return remote_ports
 
     def _populate_local_port_hct(self, port):
-        from re import compile
-        pattern = compile(r"(?P<host>\d+)$")
-        result = pattern.search(port.os_device_name.strip(':')).groupdict()
-        port.hct = (int(result['host']), -1, -1)
+        if get_platform_string().startswith("solaris"):
+            # in solaris we use the wwn as the host identifier
+            host = int(str(port.port_wwn), 16)
+            port.hct = (host, -1, -1)
+        else:
+            from re import compile
+            pattern = compile(r"(?P<host>\d+)$")
+            result = pattern.search(port.os_device_name.strip(':')).groupdict()
+            port.hct = (int(result['host']), -1, -1)
 
     def _get_local_port(self, adapter_handle, adapter_attributes, port_index):
         port_attributes = self._get_port_attributes(adapter_handle, port_index)
@@ -92,7 +97,7 @@ class HbaApi(Generator):
         port_mappings = self._get_local_port_mappings(adapter_handle, wwn_buffer)
         for remote_port in port.discovered_ports:
             channel, target = port_mappings.get(remote_port.port_wwn, (-1, -1))
-            if sys.platform.startswith("aix"):
+            if get_platform_string().startswith("aix"):
                 # hack! couldn't find target number used by OS, so using the wwn as target number :()
                 target = int(str(remote_port.node_wwn), 16)
             remote_port.hct = (port.hct[0], channel, target)
