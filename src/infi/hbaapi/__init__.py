@@ -115,6 +115,6 @@ def get_ports_collection():
     return collection
 
 def get_ports():
-    return get_ports_collections().get_ports()
+    return get_ports_collection().get_ports()
 
-__all__ = ['get_ports_collection', ]
+__all__ = ['get_ports_collection', 'get_ports']
