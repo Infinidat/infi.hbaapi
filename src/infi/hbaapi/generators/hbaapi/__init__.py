@@ -97,9 +97,6 @@ class HbaApi(Generator):
         port_mappings = self._get_local_port_mappings(adapter_handle, wwn_buffer)
         for remote_port in port.discovered_ports:
             channel, target = port_mappings.get(remote_port.port_wwn, (-1, -1))
-            if get_platform_string().startswith("aix"):
-                # hack! couldn't find target number used by OS, so using the wwn as target number :()
-                target = int(str(remote_port.node_wwn), 16)
             remote_port.hct = (port.hct[0], channel, target)
         return port
 
@@ -151,7 +148,8 @@ class HbaApi(Generator):
 
     def _mappings_to_dict(self, mappings):
         def get_target_number(entry):
-            if "solaris" in get_platform_string():
+            platform = get_platform_string()
+            if "solaris" in platform or "aix" in platform:
                 return int(translate_wwn(entry.FcId.PortWWN)._address, 16)
             return entry.ScsiId.ScsiTargetNumber
 
