@@ -73,15 +73,19 @@ class HbaApi(Generator):
         return remote_ports
 
     def _populate_local_port_hct(self, port):
-        if get_platform_string().startswith("solaris"):
-            # in solaris we use the wwn as the host identifier
-            host = int(str(port.port_wwn), 16)
-            port.hct = (host, -1, -1)
-        else:
-            from re import compile
-            pattern = compile(r"(?P<host>\d+)$")
-            result = pattern.search(port.os_device_name.strip(':')).groupdict()
-            port.hct = (int(result['host']), -1, -1)
+        from re import compile
+        pattern = compile(r"(?P<host>\d+)$")
+        if port.os_device_name is None:
+            # in case we didn't get the os_device_name
+            port.hct = (-1, -1, -1)
+            return
+        match = pattern.search(port.os_device_name.strip(':'))
+        if match is None:
+            # no match
+            port.hct = (-1, -1, -1)
+            return
+        result = match.groupdict()
+        port.hct = (int(result['host']), -1, -1)
 
     def _get_local_port(self, adapter_handle, adapter_attributes, port_index):
         port_attributes = self._get_port_attributes(adapter_handle, port_index)
