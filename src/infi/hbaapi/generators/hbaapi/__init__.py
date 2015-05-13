@@ -270,25 +270,35 @@ def translate_port_type(number):
 def translate_port_speed(source):
     """ PortSpeed indicates the signalling bit rate at which this port is currently operating.
     """
-    if source in [headers.HBA_PORTSPEED_UNKNOWN, headers.HBA_PORTSPEED_NOT_NEGOTIATED]:
-        return 0
-    translation = {headers.HBA_PORTSPEED_1GBIT: 1,
+    translation = {
+                   headers.HBA_PORTSPEED_UNKNOWN: 0,
+                   headers.HBA_PORTSPEED_1GBIT: 1,
                    headers.HBA_PORTSPEED_2GBIT: 2,
                    headers.HBA_PORTSPEED_10GBIT: 10,
                    headers.HBA_PORTSPEED_4GBIT: 4,
                    headers.HBA_PORTSPEED_8GBIT: 8,
-                   }
-    return translation[source]
+                   headers.HBA_PORTSPEED_16GBIT: 16,
+                   headers.HBA_PORTSPEED_32GBIT: 32,
+                   headers.HBA_PORTSPEED_20GBIT: 20,
+                   headers.HBA_PORTSPEED_40GBIT: 40,
+                   headers.HBA_PORTSPEED_NOT_NEGOTIATED: 0
+                  }
+    return translation.get(source, 0)
 
 def translate_port_supported_speeds(source):
     """ PortSupportedSpeed indicates the signalling bit rates at which this port may operate.
     """
     result = []
-    translation = {headers.HBA_PORTSPEED_1GBIT: 1,
+    translation = {
+                   headers.HBA_PORTSPEED_1GBIT: 1,
                    headers.HBA_PORTSPEED_2GBIT: 2,
                    headers.HBA_PORTSPEED_10GBIT: 10,
                    headers.HBA_PORTSPEED_4GBIT: 4,
                    headers.HBA_PORTSPEED_8GBIT: 8,
+                   headers.HBA_PORTSPEED_16GBIT: 16,
+                   headers.HBA_PORTSPEED_32GBIT: 32,
+                   headers.HBA_PORTSPEED_20GBIT: 20,
+                   headers.HBA_PORTSPEED_40GBIT: 40,
                    }
     keys = translation.keys()
     keys.sort(reverse=True)

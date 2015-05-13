@@ -95,3 +95,7 @@ class PortAssertions(object):
         self._assert_port_type(port.port_type)
         if not remote_port:
             self._assert_statistics(port)
+
+    def test_port_speeds(self):
+        from infi.hbaapi.generators.hbaapi import translate_port_supported_speeds
+        self.assertEquals(0, translate_port_supported_speeds(32))
