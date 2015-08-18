@@ -19,15 +19,15 @@ class MockGenerator(object):
 
 class TestCase(unittest.TestCase):
     def test_imports(self):
-        from .. import get_ports_collection, get_ports_generator
-        from ..generators import Generator, CompositeGenerator
-        from .. import Port, PortsCollection
+        from infi.hbaapi import get_ports_collection, get_ports_generator
+        from infi.hbaapi.generators import Generator, CompositeGenerator
+        from infi.hbaapi import Port, PortsCollection
     pass
 
     @mock.patch("infi.hbaapi.generators.get_list_of_generators")
     def test_iterface(self, mock):
-        from ..generators.tests import get_list_of_generators
-        from .. import get_ports_collection, get_ports_generator
+        from .test_generators import get_list_of_generators
+        from infi.hbaapi import get_ports_collection, get_ports_generator
         mock.return_value = get_list_of_generators()
         generator = get_ports_generator()
         self.assertEquals(mock.call_count, 1)
@@ -37,14 +37,14 @@ class TestCase(unittest.TestCase):
         self.assertEquals(len(collection.get_ports()), 0)
 
     def test_real_thing(self):
-        from .. import get_ports_collection
+        from infi.hbaapi import get_ports_collection
         ports = [port for port in get_ports_collection().iter_ports()]
         self.assertGreater(len(ports), 0)
 
     @mock.patch("infi.hbaapi.generators.get_list_of_generators")
     def test_with_mock_generator(self, mock):
         mock.return_value = [MockGenerator]
-        from .. import get_ports_collection
+        from infi.hbaapi import get_ports_collection
         ports = [port for port in get_ports_collection().iter_ports()]
 
 class PortAssertions(object):
@@ -60,7 +60,7 @@ class PortAssertions(object):
     def _assert_wwn(self, wwn):
         import re
         from infi.dtypes.wwn import WWN
-        from .. import WWN_PATTERN
+        from infi.hbaapi import WWN_PATTERN
         logger.debug(wwn)
         self.test_case.assertIsNotNone(wwn)
         self.test_case.assertIsInstance(wwn, WWN)

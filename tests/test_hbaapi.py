@@ -1,5 +1,3 @@
-__import__("pkg_resources").declare_namespace(__name__)
-
 #pylint: disable-all
 
 import logging
@@ -7,8 +5,8 @@ import unittest
 import mock
 from contextlib import contextmanager, nested
 from os.path import exists, join, sep, dirname, pardir, abspath
-from ... import hbaapi
-from .. import headers, c_api
+from infi import hbaapi
+from infi.hbaapi.generators.hbaapi import headers, c_api
 
 logger = logging.getLogger(__name__)
 
@@ -187,7 +185,7 @@ class GeneratorTestCase(unittest.TestCase):
 
     @mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_GetVersion")
     def test_get_version(self, api_mock):
-        from .. import c_api
+        from infi.hbaapi.generators.hbaapi import c_api
         api_mock.return_value = headers.HBA_UINT32(2)
         self.assertEquals(api_mock.return_value, c_api.HBA_GetVersion())
 
@@ -294,7 +292,7 @@ class GeneratorTestCase(unittest.TestCase):
     @contextmanager
     def _mock_get_fcp4_statistics(self):
         def side_effect(*args, **kwargs):
-            from ..headers import HBA_STATUS_ERROR_UNSUPPORTED_FC4
+            from infi.hbaapi.generators.hbaapi.headers import HBA_STATUS_ERROR_UNSUPPORTED_FC4
             return HBA_STATUS_ERROR_UNSUPPORTED_FC4
         with mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_GetFC4Statistics") as api_mock:
             api_mock.side_effect = side_effect
@@ -303,14 +301,14 @@ class GeneratorTestCase(unittest.TestCase):
     @contextmanager
     def _mock_get_fcp_target_mappings(self):
         def side_effect(*args, **kwargs):
-            from ..headers import HBA_STATUS_ERROR_NOT_SUPPORTED
+            from infi.hbaapi.generators.hbaapi.headers import HBA_STATUS_ERROR_NOT_SUPPORTED
             return HBA_STATUS_ERROR_NOT_SUPPORTED
         with mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_GetFcpTargetMappingV2") as api_mock:
             api_mock.side_effect = side_effect
             yield api_mock
 
     def test_get_number_of_adapters(self):
-        from .. import c_api
+        from infi.hbaapi.generators.hbaapi import c_api
         with nested(
                     self._mock_open_close_library(),
                     self._mock_get_number_of_adapters()
@@ -325,7 +323,7 @@ class GeneratorTestCase(unittest.TestCase):
                     self._mock_open_close_adapter(),
                     self._mock_get_adapter_attributes(),
                     ) as (_, _, _, _, api_mock):
-            from .. import HbaApi
+            from infi.hbaapi.generators.hbaapi import HbaApi
             ports = [port for port in HbaApi().iter_ports()]
             self.assertEquals(1, api_mock.call_count)
 
@@ -343,7 +341,7 @@ class GeneratorTestCase(unittest.TestCase):
                     self._mock_get_fcp_target_mappings(),
                     ):
             ports = self._get_ports()
-            from infi.hbaapi.tests import PortAssertions
+            from . import PortAssertions
             port_test_class = PortAssertions(self)
             for port in ports:
                 port_test_class.assert_port(port)
@@ -351,7 +349,7 @@ class GeneratorTestCase(unittest.TestCase):
                 self.assertEquals(port.port_supported_speeds, [2, 4, 8])
 
     def _get_ports(self):
-        from .. import HbaApi
+        from infi.hbaapi.generators.hbaapi import HbaApi
         return [port for port in HbaApi().iter_ports()]
 
     def test_for_inconsistency__adapter_index_invalid_at_adapter_name(self):

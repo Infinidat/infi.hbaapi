@@ -1,17 +1,15 @@
-__import__("pkg_resources").declare_namespace(__name__)
-
 #pylint: disable-all
 
 import logging
 import unittest
 import mock
 from os.path import exists, join, sep, dirname, pardir, abspath
-from ... import sysfs
+from infi.hbaapi.generators import sysfs
 
 logger = logging.getLogger(__name__)
 
-MOCK_ROOT_FS = abspath(join(dirname(__file__), pardir, pardir, pardir, pardir, pardir, pardir, 'mock_fs', 'redhat_no_remote_ports'))
-REMOTE_PORTS_MOCK_ROOT_FS = abspath(join(dirname(__file__), pardir, pardir, pardir, pardir, pardir, pardir, 'mock_fs', 'mock_fs_hbaapi-5'))
+MOCK_ROOT_FS = abspath(join(dirname(__file__), pardir, 'mock_fs', 'redhat_no_remote_ports'))
+REMOTE_PORTS_MOCK_ROOT_FS = abspath(join(dirname(__file__), pardir, 'mock_fs', 'mock_fs_hbaapi-5'))
 
 class GeneratorTestCase(unittest.TestCase):
     def test_stat_conversion__zero(self):
@@ -25,7 +23,7 @@ class GeneratorTestCase(unittest.TestCase):
 
     @mock.patch.object(sysfs, 'ROOT_FS' , MOCK_ROOT_FS)
     def test_mock_fs(self):
-        from infi.hbaapi.tests import PortAssertions
+        from . import PortAssertions
         logger.debug("mock_fs = %s", MOCK_ROOT_FS)
         self.assertIs(sysfs.ROOT_FS, MOCK_ROOT_FS)
         self.assertTrue(sysfs.Sysfs.is_available())

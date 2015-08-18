@@ -5,17 +5,17 @@
 
 /* Phase 1 Function Prototypes */
 
-HBA_API HBA_UINT32 PyHBA_GetVersion()
+HBA_API HBA_UINT32 PyHBA_GetVersion(void)
 {
     return HBA_GetVersion();
 }
 
-HBA_API HBA_STATUS PyHBA_LoadLibrary()
+HBA_API HBA_STATUS PyHBA_LoadLibrary(void)
 {
     return HBA_LoadLibrary();
 }
 
-HBA_API HBA_STATUS PyHBA_FreeLibrary()
+HBA_API HBA_STATUS PyHBA_FreeLibrary(void)
 {
     return HBA_FreeLibrary();
 }
@@ -25,7 +25,7 @@ HBA_API HBA_STATUS PyHBA_RegisterLibrary(PHBA_ENTRYPOINTS entrypoints)
     return HBA_RegisterLibrary(entrypoints);
 }
 
-HBA_API HBA_UINT32 PyHBA_GetNumberOfAdapters()
+HBA_API HBA_UINT32 PyHBA_GetNumberOfAdapters(void)
 {
     return HBA_GetNumberOfAdapters();
 }
@@ -252,7 +252,7 @@ HBA_API HBA_STATUS PyHBA_SendCTPassThruV2(
     return HBA_SendCTPassThruV2(handle, hbaPortWWN, pReqBuffer, ReqBufferSize, pRspBuffer, pRspBufferSize);
 }
 
-HBA_API void PyHBA_RefreshAdapterConfiguration()
+HBA_API void PyHBA_RefreshAdapterConfiguration(void)
 {
     return HBA_RefreshAdapterConfiguration();
 }
@@ -602,4 +602,8 @@ HBA_API HBA_STATUS PyHBA_SBDskGetCapacity (
     )
 {
     return HBA_SBDskGetCapacity(DeviceSelfDesc, pSBDskCapacity);
+}
+
+void init_hbaapi_aix(void)
+{
 }
