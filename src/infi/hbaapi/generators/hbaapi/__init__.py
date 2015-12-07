@@ -100,7 +100,11 @@ class HbaApi(Generator):
         port.statistics = port_statistics
         port_mappings = self._get_local_port_mappings(adapter_handle, wwn_buffer)
         for remote_port in port.discovered_ports:
-            channel, target = port_mappings.get(remote_port.port_wwn, (-1, -1))
+            platform = get_platform_string()
+            if "aix" in platform:
+                channel, target = 0, int(remote_port.port_wwn._address, 16)
+            else:
+                channel, target = port_mappings.get(remote_port.port_wwn, (-1, -1))
             remote_port.hct = (port.hct[0], channel, target)
         return port
 
