@@ -100,7 +100,11 @@ class HbaApi(Generator):
         port.statistics = port_statistics
         port_mappings = self._get_local_port_mappings(adapter_handle, wwn_buffer)
         for remote_port in port.discovered_ports:
-            channel, target = port_mappings.get(remote_port.port_wwn, (-1, -1))
+            platform = get_platform_string()
+            if "aix" in platform:
+                channel, target = 0, int(remote_port.port_wwn._address, 16)
+            else:
+                channel, target = port_mappings.get(remote_port.port_wwn, (-1, -1))
             remote_port.hct = (port.hct[0], channel, target)
         return port
 
@@ -122,7 +126,7 @@ class HbaApi(Generator):
             hba_fc4_stats = headers.HBA_FC4Statistics.create_from_string(buffer) #pylint: disable-msg=E1101
         except NotImplementedError:
             pass
-        except RuntimeError, exception:
+        except RuntimeError as exception:
             return_code = exception.args[0]
             if return_code in [headers.HBA_STATUS_ERROR_UNSUPPORTED_FC4, headers.HBA_STATUS_ERROR_ILLEGAL_WWN]:
                 pass
@@ -186,7 +190,7 @@ class HbaApi(Generator):
         mappings_buffer = ctypes.c_buffer('\x00'*size, size)
         try:
             c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, mappings_buffer)
-        except RuntimeError, exception:
+        except RuntimeError as exception:
             return_code = exception.args[0]
             if return_code == headers.HBA_STATUS_ERROR_MORE_DATA:
                 return headers.UNInt32.create_from_string(mappings_buffer)
@@ -199,7 +203,7 @@ class HbaApi(Generator):
             size = struct.sizeof(struct)
             mappings_buffer = ctypes.c_buffer(struct.write_to_string(struct), size)
             c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, mappings_buffer)
-        except RuntimeError, exception:
+        except RuntimeError as exception:
             msg ="failed to fetch port mappings for local wwn {!r}"
             log.debug(msg.format(binascii.hexlify(wwn_buffer)))
             return_code = exception.args[0]
@@ -234,7 +238,6 @@ class HbaApi(Generator):
 
     @classmethod
     def is_available(cls):
-        from infi.os_info import get_platform_string
         if get_platform_string().split('-')[0] not in ('windows', 'solaris', 'aix'):
             return False
         try:
