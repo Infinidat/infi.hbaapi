@@ -98,7 +98,8 @@ class HbaApi(Generator):
         port.discovered_ports = remote_ports
         port_statistics = self._get_local_port_statistics(adapter_handle, port_index, wwn_buffer)
         port.statistics = port_statistics
-        port_mappings = self._get_local_port_mappings(adapter_handle, wwn_buffer)
+        port.all_port_mappings = self._get_local_port_mappings(adapter_handle, wwn_buffer)
+        port_mappings = self._mappings_to_dict(port.all_port_mappings)
         for remote_port in port.discovered_ports:
             platform = get_platform_string()
             if "aix" in platform:
@@ -219,9 +220,9 @@ class HbaApi(Generator):
                 raise
 
         mappings = headers.HBA_FCPTargetMappingV2.create_from_string(mappings_buffer)
-        return self._mappings_to_dict(mappings)
+        return mappings
 
-    def iter_ports(self):
+    def _iter_ports(self):
         with self.hbaapi_library():
             for adapter_name in self._iter_adapters():
                 with self.hbaapi_adapter(adapter_name) as adapter_handle:
@@ -235,6 +236,25 @@ class HbaApi(Generator):
                         log.debug("yield port index {} for adapter name {}".format(port_index, adapter_name))
                         local_port = self._get_local_port(adapter_handle, adapter_attributes, port_index)
                         yield local_port
+
+    def iter_ports(self):
+        for local_port in self._iter_ports():
+            local_port.pop("all_port_mappings")
+            yield local_port
+
+    def iter_port_mappings(self):
+        for local_port in self._iter_ports():
+            result = dict()
+            for entry in local_port.all_port_mappings.entry:
+                if entry.FcId.PortWWN == '':
+                    log.debug("Found an empty mapping")
+                    continue
+                log.debug("Found mapping {!r} to {!r}".format(entry.ScsiId, entry.FcId.PortWWN))
+                host_wwn = local_port.port_wwn
+                target_wwn = translate_wwn(entry.FcId.PortWWN)
+                device_name = entry.ScsiId.OSDeviceName.split("\x00")[0]
+                lun = entry.ScsiId.ScsiOSLun
+                yield device_name, host_wwn, target_wwn, lun
 
     @classmethod
     def is_available(cls):
