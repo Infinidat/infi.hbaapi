@@ -128,6 +128,10 @@ class HBA_FcpScsiEntryV2(Struct): #pylint: disablemsg=C0103
                 ]
 
 class HBA_FCPTargetMappingV2(Struct): #pylint: disablemsg=C0103
+    @classmethod
+    def create_empty(cls):
+        return cls(NumberOfEntries=0, entry=[])
+
     _fields_ = [
                 UNInt32("NumberOfEntries"),
                 Padding(4),
