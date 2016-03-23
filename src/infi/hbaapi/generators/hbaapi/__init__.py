@@ -215,6 +215,9 @@ class HbaApi(Generator):
             if return_code == headers.HBA_STATUS_ERROR_MORE_DATA:
                 # NPIV ports seem to always return this
                 return headers.HBA_FCPTargetMappingV2.create_empty()
+            if return_code == headers.HBA_STATUS_ERROR:
+                # HPT-1759 hyper-v windows throw error
+                return headers.HBA_FCPTargetMappingV2.create_empty()
             else:
                 raise
 
