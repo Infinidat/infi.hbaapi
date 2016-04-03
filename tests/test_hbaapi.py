@@ -400,3 +400,20 @@ class GeneratorTestCase(unittest.TestCase):
         port_attributes = headers.HBA_PortAttributes.create_from_string(BROCADE_WINDOWS_BUFFER)
         assert len(port_attributes.PortWWN) == 8
 
+    def test_HPT_1776(self):
+        # all APIs about one of the remote ports retured HBA_STATUS_ERROR_ILLEGAL_WWN, we didn't handle that
+        with nested(
+                    self._mock_open_close_library(),
+                    self._mock_get_number_of_adapters(3),
+                    self._mock_get_adapter_name(),
+                    self._mock_open_close_adapter(),
+                    self._mock_get_adapter_attributes(),
+                    self._mock_get_port_attributes(),
+                    self._mock_get_port_statistics(),
+                    self._mock_get_fcp4_statistics(),
+                    self._mock_get_remote_port_attributes(),
+                    self._mock_get_fcp_target_mappings()
+                    ) as (_, _, _, _, _, _, _, stats_mock, _, remote_port_mock):
+            stats_mock.side_effect = RuntimeError(headers.HBA_STATUS_ERROR_ILLEGAL_WWN)
+            remote_port_mock.side_effect = RuntimeError(headers.HBA_STATUS_ERROR_ILLEGAL_WWN)
+            self.assertEquals(len(self._get_ports()), 2)        # 2 - one of the mocked adapters is "weird"

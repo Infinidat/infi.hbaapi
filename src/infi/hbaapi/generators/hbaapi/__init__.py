@@ -129,9 +129,7 @@ class HbaApi(Generator):
             pass
         except RuntimeError as exception:
             return_code = exception.args[0]
-            if return_code in [headers.HBA_STATUS_ERROR_UNSUPPORTED_FC4, headers.HBA_STATUS_ERROR_ILLEGAL_WWN]:
-                pass
-            log.debug("HBA_GetFC4Statistics returned {0}".format(return_code))
+            log.error("HBA_GetFC4Statistics returned {0}".format(return_code))
 
         self._merge_statistics(port_statistics, hba_port_stats, hba_fc4_stats)
         return port_statistics
@@ -205,17 +203,21 @@ class HbaApi(Generator):
             mappings_buffer = ctypes.c_buffer(struct.write_to_string(struct), size)
             c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, mappings_buffer)
         except RuntimeError as exception:
-            msg ="failed to fetch port mappings for local wwn {!r}"
-            log.debug(msg.format(binascii.hexlify(wwn_buffer)))
+            msg = "failed to fetch port mappings for local wwn {!r}"
+            log.error(msg.format(binascii.hexlify(wwn_buffer)))
             return_code = exception.args[0]
             if return_code == headers.HBA_STATUS_ERROR_ILLEGAL_WWN:
-                log.debug("error code is HBA_STATUS_ERROR_ILLEGAL_WWN")
-                return {}
+                log.error("error code is HBA_STATUS_ERROR_ILLEGAL_WWN")
+                return headers.HBA_FCPTargetMappingV2.create_empty()
             if return_code == headers.HBA_STATUS_ERROR_NOT_SUPPORTED:
-                log.debug("error code is HBA_STATUS_ERROR_NOT_SUPPORTED")
-                return {}
+                log.error("error code is HBA_STATUS_ERROR_NOT_SUPPORTED")
+                return headers.HBA_FCPTargetMappingV2.create_empty()
             if return_code == headers.HBA_STATUS_ERROR_MORE_DATA:
-                return {}  # NPIV ports seem to always return this
+                # NPIV ports seem to always return this
+                return headers.HBA_FCPTargetMappingV2.create_empty()
+            if return_code == headers.HBA_STATUS_ERROR:
+                # HPT-1759 hyper-v windows throw error
+                return headers.HBA_FCPTargetMappingV2.create_empty()
             else:
                 raise
 
@@ -244,7 +246,6 @@ class HbaApi(Generator):
 
     def iter_port_mappings(self):
         for local_port in self._iter_ports():
-            result = dict()
             for entry in local_port.all_port_mappings.entry:
                 if entry.FcId.PortWWN == '':
                     log.debug("Found an empty mapping")
