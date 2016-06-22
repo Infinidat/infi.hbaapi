@@ -13,6 +13,9 @@ ROOT_FS = sep
 OVERFLOW = '0xffffffffffffffff'
 UNKNOWN_WWN = '0xffffffff'
 
+def replace_only_none(orig_value, new_value):
+    return orig_value if orig_value is not None else new_value
+
 def translate_stat_value_to_number(stat_value):
     return stat_value if isinstance(stat_value, int) else -1 if stat_value == OVERFLOW else int(stat_value, 16)
 
@@ -72,7 +75,7 @@ class Sysfs(Generator):
                 for path in glob(join(rport, 'fc_remote_ports*')):
                     yield path
 
-    def get_file_content(self, filepath):
+    def get_file_content(self, filepath, return_on_error = -1):
         # The purpose of this method is to return the file's content with no exceptions.
         # If we fail to collect the information, just return None (that's OK)
         #
@@ -87,7 +90,7 @@ class Sysfs(Generator):
             with open(filepath) as fd:
                 return fd.read().strip('\n').strip()
         except IOError:
-            return -1
+            return return_on_error
 
     def _populate_port_attributes_from_fc_host(self, port, base_path):
         port.port_fcid = self.get_file_content(join(base_path, 'port_id'))
@@ -100,6 +103,9 @@ class Sysfs(Generator):
                                                 self.get_file_content(join(base_path, 'supported_speeds')))
         port.fabric_name = translate_wwn(self.get_file_content(join(base_path, 'fabric_name')))
         port.port_symbolic_name = self.get_file_content(join(base_path, 'symbolic_name'))
+        # FCoE devices may have those attributes here
+        port.model = replace_only_none(port.model, self.get_file_content(join(base_path, 'model'), None))
+        port.model_description = replace_only_none(port.model_description, self.get_file_content(join(base_path, 'model_description'), None))
     	self._populate_local_port_hct(port, base_path)
 
     def _populate_port_attributes_from_scsi_host(self, port, base_path):
@@ -154,8 +160,8 @@ class Sysfs(Generator):
             # fc_host_path is full path
             scsi_host_path = join(SCSI_HOST_BASEPATH, 'host%s' % host_id)
             port = Port()
-            self._populate_port_attributes_from_fc_host(port, fc_host_path)
             self._populate_port_attributes_from_scsi_host(port, scsi_host_path)
+            self._populate_port_attributes_from_fc_host(port, fc_host_path)
             self._populate_port_statistics_from_fc_host(port, fc_host_path)
             self._populate_discovered_ports(port, fc_host_path)
             yield port
