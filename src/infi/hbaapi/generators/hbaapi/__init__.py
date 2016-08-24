@@ -8,7 +8,7 @@ import ctypes
 from .. import Generator
 from ... import Port, PortStatistics, FC_PORT_STATISTICS
 from infi.dtypes.wwn import WWN
-import c_api, headers
+from . import c_api, headers
 import binascii
 import sys
 
@@ -27,6 +27,9 @@ WELL_KNOWN_FC_ADDRESSES = [
     0xFFFFFE, # Fabric Login server
 ]
 
+PY3 = sys.version_info[0] == 3
+
+
 class HbaApi(Generator):
     def __init__(self):
         Generator.__init__(self)
@@ -41,19 +44,19 @@ class HbaApi(Generator):
     def _get_adapter_attributes(self, adapter_handle):
         buff = ctypes.c_buffer(headers.HBA_AdapterAttributes.min_max_sizeof().max) #pylint: disable-msg=W0622,E1101
         c_api.HBA_GetAdapterAttributes(adapter_handle, buff)
-        adapter_attributes = headers.HBA_AdapterAttributes.create_from_string(buff) #pylint: disable-msg=E1101
+        adapter_attributes = headers.HBA_AdapterAttributes.create_from_string(buff.raw) #pylint: disable-msg=E1101
         return adapter_attributes
 
     def _get_port_attributes(self, adapter_handle, port_index):
-        buffer = ctypes.c_buffer(headers.HBA_PortAttributes.min_max_sizeof().max) #pylint: disable-msg=W0622,E1101
-        c_api.HBA_GetAdapterPortAttributes(adapter_handle, port_index, buffer)
-        port_attributes = headers.HBA_PortAttributes.create_from_string(buffer) #pylint: disable-msg=E1101
+        buff = ctypes.c_buffer(headers.HBA_PortAttributes.min_max_sizeof().max) #pylint: disable-msg=W0622,E1101
+        c_api.HBA_GetAdapterPortAttributes(adapter_handle, port_index, buff)
+        port_attributes = headers.HBA_PortAttributes.create_from_string(buff.raw) #pylint: disable-msg=E1101
         return port_attributes
 
     def _get_remote_port_attributes(self, adapter_handle, port_index, remote_port_index):
         buff = ctypes.c_buffer(headers.HBA_PortAttributes.min_max_sizeof().max) #pylint: disable-msg=W0622,E1101
         c_api.HBA_GetDiscoveredPortAttributes(adapter_handle, port_index, remote_port_index, buff)
-        remote_port_attributes = headers.HBA_PortAttributes.create_from_string(buff) #pylint: disable-msg=E1101
+        remote_port_attributes = headers.HBA_PortAttributes.create_from_string(buff.raw) #pylint: disable-msg=E1101
         return remote_port_attributes
 
     def _get_remote_ports(self, adapter_handle, port_index, number_of_remote_ports):
@@ -74,12 +77,12 @@ class HbaApi(Generator):
 
     def _populate_local_port_hct(self, port):
         from re import compile
-        pattern = compile(r"(?P<host>\d+)$")
+        pattern = compile(br"(?P<host>\d+)$")
         if port.os_device_name is None:
             # in case we didn't get the os_device_name
             port.hct = (-1, -1, -1)
             return
-        match = pattern.search(port.os_device_name.strip(':'))
+        match = pattern.search(port.os_device_name.strip(b':'))
         if match is None:
             # no match
             port.hct = (-1, -1, -1)
@@ -113,18 +116,18 @@ class HbaApi(Generator):
         port_statistics = PortStatistics()
         hba_port_stats, hba_fc4_stats = None, None
 
-        buffer = ctypes.c_buffer(headers.HBA_PortStatistics.min_max_sizeof().max) #pylint: disable-msg=W0622,E1101
+        buff = ctypes.c_buffer(headers.HBA_PortStatistics.min_max_sizeof().max) #pylint: disable-msg=W0622,E1101
         try:
-            c_api.HBA_GetPortStatistics(adapter_handle, port_index, buffer)
+            c_api.HBA_GetPortStatistics(adapter_handle, port_index, buff)
         except RuntimeError:
             # Default QLogic drivers on Windows don't support this function - return defaults
             return port_statistics
-        hba_port_stats = headers.HBA_PortStatistics.create_from_string(buffer) #pylint: disable-msg=E1101
+        hba_port_stats = headers.HBA_PortStatistics.create_from_string(buff.raw) #pylint: disable-msg=E1101
 
         try:
-            buffer = ctypes.c_buffer(headers.HBA_FC4Statistics.min_max_sizeof().max) #pylint: disable-msg=W0622,E1101
-            c_api.HBA_GetFC4Statistics(adapter_handle, wwn_buffer, 2, buffer)
-            hba_fc4_stats = headers.HBA_FC4Statistics.create_from_string(buffer) #pylint: disable-msg=E1101
+            buff = ctypes.c_buffer(headers.HBA_FC4Statistics.min_max_sizeof().max) #pylint: disable-msg=W0622,E1101
+            c_api.HBA_GetFC4Statistics(adapter_handle, wwn_buffer, 2, buff)
+            hba_fc4_stats = headers.HBA_FC4Statistics.create_from_string(buff.raw) #pylint: disable-msg=E1101
         except NotImplementedError:
             pass
         except RuntimeError as exception:
@@ -173,12 +176,12 @@ class HbaApi(Generator):
         return result
 
     def _extract_wwn_buffer_from_port_attributes(self, port_attributes):
-        wwn_string = ''.join([chr(item) for item in port_attributes.PortWWN])
+        wwn_string = b''.join([chr(item) if not PY3 else bytes([item]) for item in port_attributes.PortWWN])
         return ctypes.c_uint64(headers.UNInt64.create_from_string(wwn_string))
 
     def _build_empty_mappings_struct(self, number_of_elements):
         element_size = headers.HBA_FcpScsiEntryV2.min_max_sizeof().max
-        entry = headers.HBA_FcpScsiEntryV2.create_from_string('\x00'*element_size)
+        entry = headers.HBA_FcpScsiEntryV2.create_from_string(b'\x00'*element_size)
         struct = headers.HBA_FCPTargetMappingV2(NumberOfEntries=number_of_elements,
                                                 entry=[entry for index in range(number_of_elements)])
         return struct
@@ -186,13 +189,13 @@ class HbaApi(Generator):
     def _get_local_port_mappings_count(self, adapter_handle, wwn_buffer):
         struct = self._build_empty_mappings_struct(0)
         size = struct.sizeof(struct)
-        mappings_buffer = ctypes.c_buffer('\x00'*size, size)
+        buff = ctypes.c_buffer(b'\x00'*size, size)
         try:
-            c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, mappings_buffer)
+            c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, buff)
         except RuntimeError as exception:
             return_code = exception.args[0]
             if return_code == headers.HBA_STATUS_ERROR_MORE_DATA:
-                return headers.UNInt32.create_from_string(mappings_buffer)
+                return headers.UNInt32.create_from_string(buff.raw)
         return 0
 
     def _get_local_port_mappings(self, adapter_handle, wwn_buffer):
@@ -200,8 +203,8 @@ class HbaApi(Generator):
             number_of_entries = self._get_local_port_mappings_count(adapter_handle, wwn_buffer)
             struct = self._build_empty_mappings_struct(number_of_entries)
             size = struct.sizeof(struct)
-            mappings_buffer = ctypes.c_buffer(struct.write_to_string(struct), size)
-            c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, mappings_buffer)
+            buff = ctypes.c_buffer(struct.write_to_string(struct), size)
+            c_api.HBA_GetFcpTargetMappingV2(adapter_handle, wwn_buffer, buff)
         except RuntimeError as exception:
             msg = "failed to fetch port mappings for local wwn {!r}"
             log.error(msg.format(binascii.hexlify(wwn_buffer)))
@@ -221,7 +224,7 @@ class HbaApi(Generator):
             else:
                 raise
 
-        mappings = headers.HBA_FCPTargetMappingV2.create_from_string(mappings_buffer)
+        mappings = headers.HBA_FCPTargetMappingV2.create_from_string(buff.raw)
         return mappings
 
     def _iter_ports(self):
@@ -285,8 +288,8 @@ class HbaApi(Generator):
             c_api.HBA_CloseAdapter(handle)
 
 def translate_wwn(source):
-    source = ''.join([chr(item) for item in source])
-    return WWN(binascii.hexlify(source if source != '' else '\x00'*8))
+    source = b''.join([chr(item) if not PY3 else bytes([item]) for item in source])
+    return WWN(binascii.hexlify(source if source != '' else b'\x00'*8).decode("ascii"))
 
 def translate_port_type(number):
     return headers.HBA_PORTTYPE[str(number)]
@@ -324,7 +327,7 @@ def translate_port_supported_speeds(source):
                    headers.HBA_PORTSPEED_20GBIT: 20,
                    headers.HBA_PORTSPEED_40GBIT: 40,
                    }
-    keys = translation.keys()
+    keys = list(translation.keys())
     keys.sort(reverse=True)
     for key in keys:
         if key & source:
@@ -353,20 +356,20 @@ def get_port_object(adapter_attributes=Munch(), port_attributes=Munch()):
     kwargs['port_type'] = translate_port_type(getattr(port_attributes, "PortType"))
     kwargs['port_state'] = translate_port_state(getattr(port_attributes, "PortState"))
     kwargs['port_speed'] = translate_port_speed(getattr(port_attributes, "PortSpeed"))
-    kwargs['port_symbolic_name'] = getattr(port_attributes, "PortSymbolicName").strip('\x00')
-    kwargs['os_device_name'] = getattr(port_attributes, "OSDeviceName").strip('\x00')
+    kwargs['port_symbolic_name'] = getattr(port_attributes, "PortSymbolicName").strip(b'\x00')
+    kwargs['os_device_name'] = getattr(port_attributes, "OSDeviceName").strip(b'\x00')
     kwargs['port_supported_speeds'] = translate_port_supported_speeds(getattr(port_attributes, "PortSuggestedSpeed"))
     kwargs['port_max_frame_size'] = getattr(port_attributes, "PortMaxFrameSize", None)
     kwargs['fabric_name'] = translate_wwn(getattr(port_attributes, "FabricName", None))
-    kwargs['driver_name'] = getattr(adapter_attributes, "DriverName", '').strip('\x00')
-    kwargs['driver_version'] = getattr(adapter_attributes, "DriverVersion", '').strip('\x00')
-    kwargs['manufacturer'] = getattr(adapter_attributes, "Manufacturer", '').strip('\x00')
-    kwargs['serial_number'] = getattr(adapter_attributes, "SerialNumber", '').strip('\x00')
-    kwargs['model'] = getattr(adapter_attributes, "Model", '').strip('\x00')
-    kwargs['model_description'] = getattr(adapter_attributes, "ModelDescription", '').strip('\x00')
-    kwargs['hardware_version'] = getattr(adapter_attributes, "HardwareVersion", '').strip('\x00')
-    kwargs['firmware_version'] = getattr(adapter_attributes, "FirmwareVersion", '').strip('\x00')
-    kwargs['option_rom_version'] = getattr(adapter_attributes, "OptionROMVersion", '').strip('\x00')
+    kwargs['driver_name'] = getattr(adapter_attributes, "DriverName", b'').strip(b'\x00')
+    kwargs['driver_version'] = getattr(adapter_attributes, "DriverVersion", b'').strip(b'\x00')
+    kwargs['manufacturer'] = getattr(adapter_attributes, "Manufacturer", b'').strip(b'\x00')
+    kwargs['serial_number'] = getattr(adapter_attributes, "SerialNumber", b'').strip(b'\x00')
+    kwargs['model'] = getattr(adapter_attributes, "Model", b'').strip(b'\x00')
+    kwargs['model_description'] = getattr(adapter_attributes, "ModelDescription", b'').strip(b'\x00')
+    kwargs['hardware_version'] = getattr(adapter_attributes, "HardwareVersion", b'').strip(b'\x00')
+    kwargs['firmware_version'] = getattr(adapter_attributes, "FirmwareVersion", b'').strip(b'\x00')
+    kwargs['option_rom_version'] = getattr(adapter_attributes, "OptionROMVersion", b'').strip(b'\x00')
     port = Port()
     for key, value in kwargs.items():
         port[key] = value

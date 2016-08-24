@@ -1,3 +1,4 @@
+from __future__ import print_function
 __import__("pkg_resources").declare_namespace(__name__)
 
 import sys
@@ -16,7 +17,7 @@ def _print_hbaapi_example():
                 return json.JSONEncoder.default(self, obj)
 
     from infi.hbaapi import get_ports_collection
-    print json.dumps([port for port in get_ports_collection().get_ports()], indent=4, cls=JSONEncoder)
+    print(json.dumps([port for port in get_ports_collection().get_ports()], indent=4, cls=JSONEncoder))
 
 
 def hbaapi_mock(argv=sys.argv): #pylint: disable-msg=W0102,W0613
@@ -28,5 +29,5 @@ def hbaapi_real(argv=sys.argv): #pylint: disable-msg=W0102,W0613
     _print_hbaapi_example()
 
 def main(argv=sys.argv): #pylint: disable-msg=W0102,W0613
-    print 'hello world'
+    print('hello world')
 
