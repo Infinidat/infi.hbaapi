@@ -90,7 +90,7 @@ class HbaApi(Generator):
     def _get_local_port(self, adapter_handle, adapter_attributes, port_index):
         port_attributes = self._get_port_attributes(adapter_handle, port_index)
         port = get_port_object(adapter_attributes, port_attributes)
-        logging.debug("checking local fc port {!r}".format(port.port_wwn))
+        log.debug("checking local fc port {!r}".format(port.port_wwn))
         self._populate_local_port_hct(port)
         wwn_buffer = self._extract_wwn_buffer_from_port_attributes(port_attributes)
         number_of_remote_ports = port_attributes.NumberOfDiscoveredPorts
@@ -169,7 +169,7 @@ class HbaApi(Generator):
             key = translate_wwn(entry.FcId.PortWWN)
             value = (entry.ScsiId.ScsiBusNumber, get_target_number(entry))
             result[key] = value
-        log.debug("{!r}".format(result))
+        log.debug("_mappings_to_dict result: {!r}".format(result))
         return result
 
     def _extract_wwn_buffer_from_port_attributes(self, port_attributes):
