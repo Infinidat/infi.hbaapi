@@ -3,7 +3,7 @@
 import logging
 import unittest
 import mock
-from contextlib import contextmanager, nested
+from contextlib import contextmanager
 from os.path import exists, join, sep, dirname, pardir, abspath
 from infi import hbaapi
 from infi.hbaapi.generators.hbaapi import headers, c_api
@@ -13,49 +13,49 @@ logger = logging.getLogger(__name__)
 def _translate_wwn(source):
     return source
 
-ADAPTER_NAMES = ['lsiSAS', 'qlogic1', 'qlogic2']
-ADAPTER_HANDLES = {'lsiSAS': 1, 'qlogic1': 2, 'qlogic2': 3}
+ADAPTER_NAMES = [b'lsiSAS', b'qlogic1', b'qlogic2']
+ADAPTER_HANDLES = {b'lsiSAS': 1, b'qlogic1': 2, b'qlogic2': 3}
 ADAPTER_ATTRIBUTES_BY_HANDLE = {1: NotImplementedError,
                                 2: dict(
-    Manufacturer='QLogic Corporation',
-    SerialNumber='I48461',
-    Model='QLE2562',
-    ModelDescription='QLogic QLE2562 Fibre Channel Adapter',
+    Manufacturer=b'QLogic Corporation',
+    SerialNumber=b'I48461',
+    Model=b'QLE2562',
+    ModelDescription=b'QLogic QLE2562 Fibre Channel Adapter',
     NodeWWN=_translate_wwn([32, 0, 0, 36, 255, 44, 77, 242, ]),
-    NodeSymbolicName='QLE2562 FW:v4.06.01 DVR:v9.1.8.6',
-    HardwareVersion='',
-    DriverVersion='9.1.8.6',
-    OptionROMVersion='2.16',
-    FirmwareVersion='4.06.01',
+    NodeSymbolicName=b'QLE2562 FW:v4.06.01 DVR:v9.1.8.6',
+    HardwareVersion=b'',
+    DriverVersion=b'9.1.8.6',
+    OptionROMVersion=b'2.16',
+    FirmwareVersion=b'4.06.01',
     VendorSpecificID=624038007,
     NumberOfPorts=1,
-    DriverName='ql2300.sys',),
+    DriverName=b'ql2300.sys',),
                                 3: dict(
-    Manufacturer='QLogic Corporation',
-    SerialNumber='I48717',
-    Model='QLE2562',
-    ModelDescription='QLogic QLE2562 Fibre Channel Adapter',
+    Manufacturer=b'QLogic Corporation',
+    SerialNumber=b'I48717',
+    Model=b'QLE2562',
+    ModelDescription=b'QLogic QLE2562 Fibre Channel Adapter',
     NodeWWN=_translate_wwn([32, 0, 0, 36, 255, 44, 77, 243, ]),
-    NodeSymbolicName='QLE2562 FW:v4.06.01 DVR:v9.1.8.6',
-    HardwareVersion='',
-    DriverVersion='9.1.8.6',
-    OptionROMVersion='2.16',
-    FirmwareVersion='4.06.01',
+    NodeSymbolicName=b'QLE2562 FW:v4.06.01 DVR:v9.1.8.6',
+    HardwareVersion=b'',
+    DriverVersion=b'9.1.8.6',
+    OptionROMVersion=b'2.16',
+    FirmwareVersion=b'4.06.01',
     VendorSpecificID=624038007,
     NumberOfPorts=1,
-    DriverName='ql2300.sys',),
+    DriverName=b'ql2300.sys',),
                                 4: dict(
-    Manufacturer='Brocade',
-    SerialNumber='BUL0443G00S',
-    Model='Brocade-1860-2p',
-    ModelDescription='Brocade 16G FC HBA',
+    Manufacturer=b'Brocade',
+    SerialNumber=b'BUL0443G00S',
+    Model=b'Brocade-1860-2p',
+    ModelDescription=b'Brocade 16G FC HBA',
     NodeWWN=_translate_wwn([32,0,140,124,255,19,11,0]),
-    NodeSymbolicName='Brocade-1860-2p | 3.2.2.5 | io122 | Windows Server 2012 R2 Standard | ',
-    HardwareVersion='Rev-B', DriverVersion='3.2.2.5', OptionROMVersion='3.2.4.0',
-    FirmwareVersion='3.2.2.5',
+    NodeSymbolicName=b'Brocade-1860-2p | 3.2.2.5 | io122 | Windows Server 2012 R2 Standard | ',
+    HardwareVersion=b'Rev-B', DriverVersion=b'3.2.2.5', OptionROMVersion=b'3.2.4.0',
+    FirmwareVersion=b'3.2.2.5',
     VendorSpecificID=2233943,
     NumberOfPorts=1,
-    DriverName='bfad')
+    DriverName=b'bfad')
 }
 
 PORT_ATTRIBUTES_BY_ADAPTER_HANDLE = {2:[dict(
@@ -67,8 +67,8 @@ PORT_ATTRIBUTES_BY_ADAPTER_HANDLE = {2:[dict(
     PortSupportedClassofService=8,
     PortSupportedFc4Types=[0] * 32,
     PortActiveFc4Types=[0] * 32,
-    PortSymbolicName='',
-    OSDeviceName='\\\\.\\Scsi3:',
+    PortSymbolicName=b'',
+    OSDeviceName=b'\\\\.\\Scsi3:',
     PortSuggestedSpeed=26,
     PortSpeed=0,
     PortMaxFrameSize=2048,
@@ -84,8 +84,8 @@ PORT_ATTRIBUTES_BY_ADAPTER_HANDLE = {2:[dict(
     PortSupportedClassofService=8,
     PortSupportedFc4Types=[0] * 32,
     PortActiveFc4Types=[0] * 32,
-    PortSymbolicName='',
-    OSDeviceName='\\\\.\\Scsi3:',
+    PortSymbolicName=b'',
+    OSDeviceName=b'\\\\.\\Scsi3:',
     PortSuggestedSpeed=26,
     PortSpeed=0,
     PortMaxFrameSize=2048,
@@ -101,12 +101,12 @@ PORT_ATTRIBUTES_BY_ADAPTER_HANDLE = {2:[dict(
     PortSupportedClassofService=8,
     PortSupportedFc4Types=[ 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
     PortActiveFc4Types=[ 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-    PortSymbolicName='',
-    OSDeviceName='\\\\.\\Scsi4:',
+    PortSymbolicName=b'',
+    OSDeviceName=b'\\\\.\\Scsi4:',
     PortSuggestedSpeed=0,
     PortSpeed=0,
     PortMaxFrameSize=2112,
-    FabricName='',
+    FabricName=b'',
     NumberOfDiscoveredPorts=0)]}
 
 REMOTE_PORT_ATTRIBUTES = {
@@ -119,8 +119,8 @@ REMOTE_PORT_ATTRIBUTES = {
     PortSupportedClassofService=0,
     PortSupportedFc4Types=[0] * 32,
     PortActiveFc4Types=[0] * 32,
-    PortSymbolicName='',
-    OSDeviceName='',
+    PortSymbolicName=b'',
+    OSDeviceName=b'',
     PortSuggestedSpeed=0,
     PortSpeed=0,
     PortMaxFrameSize=0,
@@ -135,8 +135,8 @@ REMOTE_PORT_ATTRIBUTES = {
     PortSupportedClassofService=0,
     PortSupportedFc4Types=[0] * 32,
     PortActiveFc4Types=[0] * 32,
-    PortSymbolicName='',
-    OSDeviceName='',
+    PortSymbolicName=b'',
+    OSDeviceName=b'',
     PortSuggestedSpeed=0,
     PortSpeed=0,
     PortMaxFrameSize=0,
@@ -178,7 +178,7 @@ PORT_STATISTICS_BY_ADAPTER_HANDLE = {2:[dict(
     InvalidCRCCount=0,
 )]}
 
-BROCADE_WINDOWS_BUFFER = ' \x00\x8c|\xff\x13\x0b\x00\x10\x00\x8c|\xff\x13\x0b\x00\x00\x00\x00\x00\x05\x00\x00\x00\x06\x00\x00\x00\x08\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\\\\.\\Scsi4:\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+BROCADE_WINDOWS_BUFFER = b' \x00\x8c|\xff\x13\x0b\x00\x10\x00\x8c|\xff\x13\x0b\x00\x00\x00\x00\x00\x05\x00\x00\x00\x06\x00\x00\x00\x08\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\\\\.\\Scsi4:\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
 
 class GeneratorTestCase(unittest.TestCase):
     pass
@@ -187,13 +187,12 @@ class GeneratorTestCase(unittest.TestCase):
     def test_get_version(self, api_mock):
         from infi.hbaapi.generators.hbaapi import c_api
         api_mock.return_value = headers.HBA_UINT32(2)
-        self.assertEquals(api_mock.return_value, c_api.HBA_GetVersion())
+        self.assertEqual(api_mock.return_value, c_api.HBA_GetVersion())
 
     @contextmanager
     def _mock_open_close_library(self):
-        with nested(mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_LoadLibrary"),
-                               mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_FreeLibrary")
-                               ) as (load, free):
+        with mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_LoadLibrary") as load, \
+             mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_FreeLibrary") as free:
             load.return_value = 0
             free.return_value = 0
             yield (load, free)
@@ -222,9 +221,8 @@ class GeneratorTestCase(unittest.TestCase):
         def side_effect(*args, **kwargs):
             adapter_name_ctypes_object = args[0]
             return headers.HBA_HANDLE(ADAPTER_HANDLES.get(adapter_name_ctypes_object.value))
-        with nested(mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_OpenAdapter"),
-                    mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_CloseAdapter"),
-                    ) as (open, close):
+        with mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_OpenAdapter") as open, \
+             mock.patch("infi.hbaapi.generators.hbaapi.c_api.HBA_CloseAdapter") as close:
             open.side_effect = side_effect
             close.return_value = 0
             yield (open, close)
@@ -309,90 +307,78 @@ class GeneratorTestCase(unittest.TestCase):
 
     def test_get_number_of_adapters(self):
         from infi.hbaapi.generators.hbaapi import c_api
-        with nested(
-                    self._mock_open_close_library(),
-                    self._mock_get_number_of_adapters()
-                    ) as (_, number_of_adapters):
-            self.assertEquals(number_of_adapters.return_value, c_api.HBA_GetNumberOfAdapters())
+        with self._mock_open_close_library(), \
+             self._mock_get_number_of_adapters() as number_of_adapters:
+            self.assertEqual(number_of_adapters.return_value, c_api.HBA_GetNumberOfAdapters())
 
     def test_get_port_adapter_raises_exception(self):
-        with nested(
-                    self._mock_open_close_library(),
-                    self._mock_get_number_of_adapters(1),
-                    self._mock_get_adapter_name(),
-                    self._mock_open_close_adapter(),
-                    self._mock_get_adapter_attributes(),
-                    ) as (_, _, _, _, api_mock):
+        with self._mock_open_close_library(), \
+             self._mock_get_number_of_adapters(1), \
+             self._mock_get_adapter_name(), \
+             self._mock_open_close_adapter(), \
+             self._mock_get_adapter_attributes() as api_mock:
             from infi.hbaapi.generators.hbaapi import HbaApi
             ports = [port for port in HbaApi().iter_ports()]
-            self.assertEquals(1, api_mock.call_count)
+            self.assertEqual(1, api_mock.call_count)
 
     def test_mock(self):
-        with nested(
-                    self._mock_open_close_library(),
-                    self._mock_get_number_of_adapters(3),
-                    self._mock_get_adapter_name(),
-                    self._mock_open_close_adapter(),
-                    self._mock_get_adapter_attributes(),
-                    self._mock_get_port_attributes(),
-                    self._mock_get_port_statistics(),
-                    self._mock_get_fcp4_statistics(),
-                    self._mock_get_remote_port_attributes(),
-                    self._mock_get_fcp_target_mappings(),
-                    ):
+        with self._mock_open_close_library(), \
+             self._mock_get_number_of_adapters(3), \
+             self._mock_get_adapter_name(), \
+             self._mock_open_close_adapter(), \
+             self._mock_get_adapter_attributes(), \
+             self._mock_get_port_attributes(), \
+             self._mock_get_port_statistics(), \
+             self._mock_get_fcp4_statistics(), \
+             self._mock_get_remote_port_attributes(), \
+             self._mock_get_fcp_target_mappings():
             ports = self._get_ports()
             from . import PortAssertions
             port_test_class = PortAssertions(self)
             for port in ports:
                 port_test_class.assert_port(port)
-                self.assertEquals(port.port_speed, 0)
-                self.assertEquals(port.port_supported_speeds, [2, 4, 8])
+                self.assertEqual(port.port_speed, 0)
+                self.assertEqual(port.port_supported_speeds, [2, 4, 8])
 
     def _get_ports(self):
         from infi.hbaapi.generators.hbaapi import HbaApi
         return [port for port in HbaApi().iter_ports()]
 
     def test_for_inconsistency__adapter_index_invalid_at_adapter_name(self):
-        with nested(
-                    self._mock_open_close_library(),
-                    self._mock_get_number_of_adapters(5),
-                    self._mock_get_adapter_name(),
-                    self._mock_open_close_adapter(),
-                    self._mock_get_adapter_attributes(),
-                    self._mock_get_port_attributes(),
-                    self._mock_get_port_statistics(),
-                    self._mock_get_fcp4_statistics(),
-                    self._mock_get_remote_port_attributes(),
-                    self._mock_get_fcp_target_mappings()
-                    ):
+        with self._mock_open_close_library(), \
+             self._mock_get_number_of_adapters(5), \
+             self._mock_get_adapter_name(), \
+             self._mock_open_close_adapter(), \
+             self._mock_get_adapter_attributes(), \
+             self._mock_get_port_attributes(), \
+             self._mock_get_port_statistics(), \
+             self._mock_get_fcp4_statistics(), \
+             self._mock_get_remote_port_attributes(), \
+             self._mock_get_fcp_target_mappings():
             self.assertRaises(c_api.InconsistencyError, self._get_ports)
 
     def test_for_inconsistency__adapter_index_invalid_at_adapter_attributes(self):
-        with nested(
-                    self._mock_open_close_library(),
-                    self._mock_get_number_of_adapters(1),
-                    self._mock_get_adapter_name(),
-                    self._mock_open_close_adapter(),
-                    self._mock_get_adapter_attributes(),
-                    self._mock_get_port_attributes(),
-                    self._mock_get_port_statistics(),
-                    self._mock_get_fcp4_statistics(),
-                    ) as (_, _, _, _, mock_api, _, _, _):
+        with self._mock_open_close_library(), \
+             self._mock_get_number_of_adapters(1), \
+             self._mock_get_adapter_name(), \
+             self._mock_open_close_adapter(), \
+             self._mock_get_adapter_attributes() as mock_api, \
+             self._mock_get_port_attributes(), \
+             self._mock_get_port_statistics(), \
+             self._mock_get_fcp4_statistics():
             mock_api.side_effect = c_api.InconsistencyError
             self.assertRaises(c_api.InconsistencyError, self._get_ports)
 
     def test_for_inconsistency__remote_port_has_gone_away(self):
-        with nested(
-                    self._mock_open_close_library(),
-                    self._mock_get_number_of_adapters(3),
-                    self._mock_get_adapter_name(),
-                    self._mock_open_close_adapter(),
-                    self._mock_get_adapter_attributes(),
-                    self._mock_get_port_attributes(),
-                    self._mock_get_port_statistics(),
-                    self._mock_get_fcp4_statistics(),
-                    self._mock_get_remote_port_attributes()
-                    ) as (_, _, _, _, _, _, _, _, mock_api):
+        with self._mock_open_close_library(), \
+             self._mock_get_number_of_adapters(3), \
+             self._mock_get_adapter_name(), \
+             self._mock_open_close_adapter(), \
+             self._mock_get_adapter_attributes(), \
+             self._mock_get_port_attributes(), \
+             self._mock_get_port_statistics(), \
+             self._mock_get_fcp4_statistics(), \
+             self._mock_get_remote_port_attributes() as mock_api:
             mock_api.side_effect = c_api.InconsistencyError
             self.assertRaises(c_api.InconsistencyError, self._get_ports)
 
@@ -402,18 +388,16 @@ class GeneratorTestCase(unittest.TestCase):
 
     def test_HPT_1776(self):
         # all APIs about one of the remote ports retured HBA_STATUS_ERROR_ILLEGAL_WWN, we didn't handle that
-        with nested(
-                    self._mock_open_close_library(),
-                    self._mock_get_number_of_adapters(3),
-                    self._mock_get_adapter_name(),
-                    self._mock_open_close_adapter(),
-                    self._mock_get_adapter_attributes(),
-                    self._mock_get_port_attributes(),
-                    self._mock_get_port_statistics(),
-                    self._mock_get_fcp4_statistics(),
-                    self._mock_get_remote_port_attributes(),
-                    self._mock_get_fcp_target_mappings()
-                    ) as (_, _, _, _, _, _, _, stats_mock, _, remote_port_mock):
+        with self._mock_open_close_library(), \
+             self._mock_get_number_of_adapters(3), \
+             self._mock_get_adapter_name(), \
+             self._mock_open_close_adapter(), \
+             self._mock_get_adapter_attributes(), \
+             self._mock_get_port_attributes(), \
+             self._mock_get_port_statistics(), \
+             self._mock_get_fcp4_statistics() as stats_mock, \
+             self._mock_get_remote_port_attributes(), \
+             self._mock_get_fcp_target_mappings() as remote_port_mock:
             stats_mock.side_effect = RuntimeError(headers.HBA_STATUS_ERROR_ILLEGAL_WWN)
             remote_port_mock.side_effect = RuntimeError(headers.HBA_STATUS_ERROR_ILLEGAL_WWN)
-            self.assertEquals(len(self._get_ports()), 2)        # 2 - one of the mocked adapters is "weird"
+            self.assertEqual(len(self._get_ports()), 2)        # 2 - one of the mocked adapters is "weird"

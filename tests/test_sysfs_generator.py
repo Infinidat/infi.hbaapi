@@ -13,13 +13,13 @@ REMOTE_PORTS_MOCK_ROOT_FS = abspath(join(dirname(__file__), pardir, 'mock_fs', '
 
 class GeneratorTestCase(unittest.TestCase):
     def test_stat_conversion__zero(self):
-        self.assertEquals(0, sysfs.translate_stat_value_to_number('0x0'))
+        self.assertEqual(0, sysfs.translate_stat_value_to_number('0x0'))
 
     def test_stat_conversion__ff(self):
-        self.assertEquals(255, sysfs.translate_stat_value_to_number('0xff'))
+        self.assertEqual(255, sysfs.translate_stat_value_to_number('0xff'))
 
     def test_stat_conversion__overflow(self):
-        self.assertEquals(-1, sysfs.translate_stat_value_to_number('0xffffffffffffffff'))
+        self.assertEqual(-1, sysfs.translate_stat_value_to_number('0xffffffffffffffff'))
 
     @mock.patch.object(sysfs, 'ROOT_FS' , MOCK_ROOT_FS)
     def test_mock_fs(self):
@@ -33,7 +33,7 @@ class GeneratorTestCase(unittest.TestCase):
             port_test_class.assert_port(port)
 
     def _assert_wwn_translation(self, expected, actual):
-        self.assertEquals(sysfs.translate_wwn(actual), expected)
+        self.assertEqual(sysfs.translate_wwn(actual), expected)
 
     def test_wwn_translation(self):
         for expected, actual in [('01:02:03:04:05:06:07:08', '01:02:03:04:05:06:07:08'),

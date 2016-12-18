@@ -30,11 +30,11 @@ class TestCase(unittest.TestCase):
         from infi.hbaapi import get_ports_collection, get_ports_generator
         mock.return_value = get_list_of_generators()
         generator = get_ports_generator()
-        self.assertEquals(mock.call_count, 1)
+        self.assertEqual(mock.call_count, 1)
         available_generators = [item for item in generator.iter_generators()]
-        self.assertEquals(len(available_generators), 1)
+        self.assertEqual(len(available_generators), 1)
         collection = get_ports_collection()
-        self.assertEquals(len(collection.get_ports()), 0)
+        self.assertEqual(len(collection.get_ports()), 0)
 
     def test_real_thing(self):
         from infi.hbaapi import get_ports_collection
@@ -98,4 +98,4 @@ class PortAssertions(object):
 
     def test_port_speeds(self):
         from infi.hbaapi.generators.hbaapi import translate_port_supported_speeds
-        self.assertEquals(0, translate_port_supported_speeds(32))
+        self.assertEqual(0, translate_port_supported_speeds(32))

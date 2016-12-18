@@ -85,7 +85,7 @@ class PortsCollection(object):
         return self._ports[wwn]
 
     def add_port(self, port):
-        if not self._ports.has_key(port.port_wwn):
+        if port.port_wwn not in self._ports:
             self._ports[port.port_wwn] = port
         else:
             self._ports[port.port_wwn].update_not_none_values(port)

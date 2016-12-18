@@ -106,7 +106,7 @@ class Sysfs(Generator):
         # FCoE devices may have those attributes here
         port.model = replace_only_none(port.model, self.get_file_content(join(base_path, 'model'), None))
         port.model_description = replace_only_none(port.model_description, self.get_file_content(join(base_path, 'model_description'), None))
-    	self._populate_local_port_hct(port, base_path)
+        self._populate_local_port_hct(port, base_path)
 
     def _populate_port_attributes_from_scsi_host(self, port, base_path):
         port.model = self.get_file_content(join(base_path, 'model*name'))
