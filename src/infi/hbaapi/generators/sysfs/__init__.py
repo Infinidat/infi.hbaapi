@@ -102,7 +102,7 @@ class Sysfs(Generator):
         port.port_supported_speeds = translate_supported_speeds(
                                                 self.get_file_content(join(base_path, 'supported_speeds')))
         port.fabric_name = translate_wwn(self.get_file_content(join(base_path, 'fabric_name')))
-        port.port_symbolic_name = self.get_file_content(join(base_path, 'symbolic_name'))
+        port.port_symbolic_name = self.get_file_content(join(base_path, 'symbolic_name'), None)
         # FCoE devices may have those attributes here
         port.model = replace_only_none(port.model, self.get_file_content(join(base_path, 'model'), None))
         port.model_description = replace_only_none(port.model_description, self.get_file_content(join(base_path, 'model_description'), None))
