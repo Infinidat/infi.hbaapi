@@ -256,7 +256,7 @@ class HbaApi(Generator):
                 log.debug("Found mapping {!r} to {!r}".format(entry.ScsiId, entry.FcId.PortWWN))
                 host_wwn = local_port.port_wwn
                 target_wwn = translate_wwn(entry.FcId.PortWWN)
-                device_name = entry.ScsiId.OSDeviceName.split("\x00")[0]
+                device_name = entry.ScsiId.OSDeviceName.split(b"\x00")[0]
                 lun = entry.ScsiId.ScsiOSLun
                 yield device_name, host_wwn, target_wwn, lun
 
