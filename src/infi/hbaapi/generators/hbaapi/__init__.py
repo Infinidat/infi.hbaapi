@@ -285,7 +285,8 @@ class HbaApi(Generator):
     def hbaapi_adapter(self, adapter_name):
         try:
             handle = c_api.HBA_OpenAdapter(adapter_name)
-        except RuntimeError as exc:
+        except RuntimeError:
+            log.exception("HBA_OpenAdapter raised an exception: ")
             yield None
         else:
             try:
