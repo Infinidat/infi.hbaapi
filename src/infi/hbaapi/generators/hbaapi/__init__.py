@@ -231,6 +231,8 @@ class HbaApi(Generator):
         with self.hbaapi_library():
             for adapter_name in self._iter_adapters():
                 with self.hbaapi_adapter(adapter_name) as adapter_handle:
+                    if adapter_handle is None:
+                        continue
                     try:
                         adapter_attributes = self._get_adapter_attributes(adapter_handle)
                     except NotImplementedError:
@@ -281,11 +283,15 @@ class HbaApi(Generator):
 
     @contextmanager
     def hbaapi_adapter(self, adapter_name):
-        handle = c_api.HBA_OpenAdapter(adapter_name)
         try:
-            yield handle
-        finally:
-            c_api.HBA_CloseAdapter(handle)
+            handle = c_api.HBA_OpenAdapter(adapter_name)
+        except RuntimeError as exc:
+            yield None
+        else:
+            try:
+                yield handle
+            finally:
+                c_api.HBA_CloseAdapter(handle)
 
 def translate_wwn(source):
     source = b''.join([chr(item) if not PY3 else bytes([item]) for item in source])
