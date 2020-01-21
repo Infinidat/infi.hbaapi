@@ -286,7 +286,8 @@ class HbaApi(Generator):
         try:
             handle = c_api.HBA_OpenAdapter(adapter_name)
         except RuntimeError:
-            log.exception("HBA_OpenAdapter raised an exception: ")
+            log.exception("c_api.HBA_OpenAdapter raised an exception. "
+                          "A possible cause is unplagged HBA cable. Skipping adapter: ")
             yield None
         else:
             try:
