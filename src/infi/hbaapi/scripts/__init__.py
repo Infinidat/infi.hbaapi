@@ -11,7 +11,7 @@ def _print_hbaapi_example():
 
     class JSONEncoder(json.JSONEncoder):
         def default(self, obj):
-            if isinstance(obj, (WWN)):
+            if isinstance(obj, (WWN)) or isinstance(obj, bytes):
                 return str(obj)
             else:
                 return json.JSONEncoder.default(self, obj)
