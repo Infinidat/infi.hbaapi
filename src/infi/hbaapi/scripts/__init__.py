@@ -13,7 +13,7 @@ def _print_hbaapi_example():
         def default(self, obj):
             if isinstance(obj, (WWN)):
                 return str(obj)
-            if isinstance(obj, bytes):
+            elif isinstance(obj, bytes):
                 return obj.decode()
             else:
                 return json.JSONEncoder.default(self, obj)
