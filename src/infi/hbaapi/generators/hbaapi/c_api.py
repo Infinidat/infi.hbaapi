@@ -1,23 +1,16 @@
 
 import ctypes
 import glob
+import os
 import sys
+import sysconfig
+
+import psutil
+
 from . import headers
 from infi.cwrap import WrappedFunction, errcheck_zero, errcheck_nonzero, errcheck_nothing
 from infi.os_info import get_platform_string
 from infi.cwrap import IN, IN_OUT, wrap_library_function
-import os
-
-HBAAPI_SHARED_LIBRARY_FILENAMES = {
-    'windows': 'hbaapi.dll',
-    'linux': (glob.glob('/usr/lib64/libHBAAPI.so*' if sys.maxsize > 2 ** 32 \
-                        else '/usr/lib/libHBAAPI.so*') + ['libHBAAPI.so'])[0],
-    'sunos': (glob.glob('/usr/lib64/libsun_fc.so*' if sys.maxsize > 2 ** 32 \
-                        else '/usr/lib/libsun_fc.so*') + ['libsun_fc.so'])[0],
-    'aix': os.path.join(os.path.dirname(__file__), '_hbaapi_aix.so'),
-    'solaris': (glob.glob('/usr/lib64/libsun_fc.so*' if sys.maxsize > 2 ** 32 \
-                        else '/usr/lib/libsun_fc.so*') + ['libsun_fc.so'])[0]
-    }
 
 class InconsistencyError(Exception):
     pass
@@ -45,14 +38,43 @@ class HbaApiFunction(WrappedFunction):
         return 'CFUNCTYPE'
 
     @classmethod
+    def _get_library_path(cls):
+        if psutil.WINDOWS:
+            return 'hbaapi.dll'
+        elif psutil.AIX:
+            prefix = os.path.dirname(__file__)
+            suffix = sysconfig.get_config_var('EXT_SUFFIX')
+            name = '_hbaapi_aix' + suffix
+            path = os.path.join(prefix, name)
+            return path
+        elif psutil.LINUX:
+            name = 'libHBAAPI.so'
+        elif psutil.SUNOS:
+            name = 'libsun_fc.so'
+        else:
+            raise OSError('Platform %s not supported' % sys.platform)
+        if sys.maxsize > 2**32 and os.path.exists('/usr/lib64'):
+            prefix = '/usr/lib64'
+        elif os.path.exists('/usr/lib'):
+            prefix = '/usr/lib'
+        else:
+            return name
+        path = os.path.join(prefix, name)
+        if os.path.exists(path):
+            return path
+        path += '.*'
+        path = glob.glob(path)
+        if path:
+            return path[0]
+        return name
+
+    @classmethod
     def _get_library(cls):
-        library_name = HBAAPI_SHARED_LIBRARY_FILENAMES.get(get_platform_string().split("-")[0], None)
-        if library_name is None:
-            raise OSError
+        path = cls._get_library_path()
         try:
-            return ctypes.cdll.LoadLibrary(library_name)
-        except:
-            raise OSError
+            return ctypes.cdll.LoadLibrary(path)
+        except Exception as error:
+            raise OSError('Failed to load %s: %s' % (path, error))
 
     @classmethod
     def _get_function(cls):
