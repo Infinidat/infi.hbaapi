@@ -7,6 +7,7 @@ from infi.cwrap import WrappedFunction, errcheck_zero, errcheck_nonzero, errchec
 from infi.os_info import get_platform_string
 from infi.cwrap import IN, IN_OUT, wrap_library_function
 import os
+from sysconfig import get_config_var
 
 HBAAPI_SHARED_LIBRARY_FILENAMES = {
     'windows': 'hbaapi.dll',
@@ -14,7 +15,8 @@ HBAAPI_SHARED_LIBRARY_FILENAMES = {
                         else '/usr/lib/libHBAAPI.so*') + ['libHBAAPI.so'])[0],
     'sunos': (glob.glob('/usr/lib64/libsun_fc.so*' if sys.maxsize > 2 ** 32 \
                         else '/usr/lib/libsun_fc.so*') + ['libsun_fc.so'])[0],
-    'aix': os.path.join(os.path.dirname(__file__), '_hbaapi_aix.so'),
+    'aix': os.path.join(os.path.dirname(__file__),
+                        '_hbaapi_aix' + get_config_var('EXT_SUFFIX')),
     'solaris': (glob.glob('/usr/lib64/libsun_fc.so*' if sys.maxsize > 2 ** 32 \
                         else '/usr/lib/libsun_fc.so*') + ['libsun_fc.so'])[0]
     }
