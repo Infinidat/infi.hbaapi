@@ -47,7 +47,7 @@ class Port(Munch):
         self.__setitem__('statistics', PortStatistics()) #pylint: disable-msg=E1101
 
     def update_not_none_values(self, other_port):
-        for key, value in other_port.iteritems():
+        for key, value in other_port.items():
             our_value = self.get(key, None) #pylint: disable-msg=E1101
             if key == 'statistics':
                 continue
