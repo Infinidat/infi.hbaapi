@@ -98,18 +98,22 @@ class HbaApi(Generator):
         wwn_buffer = self._extract_wwn_buffer_from_port_attributes(port_attributes)
         number_of_remote_ports = port_attributes.NumberOfDiscoveredPorts
         remote_ports = self._get_remote_ports(adapter_handle, port_index, number_of_remote_ports)
-        port.discovered_ports = remote_ports
         port_statistics = self._get_local_port_statistics(adapter_handle, port_index, wwn_buffer)
         port.statistics = port_statistics
         port.all_port_mappings = self._get_local_port_mappings(adapter_handle, wwn_buffer)
         port_mappings = self._mappings_to_dict(port.all_port_mappings)
-        for remote_port in port.discovered_ports:
+        target_wwpns = set(port_mappings.keys())
+        port.discovered_ports = []
+        for remote_port in remote_ports:
             platform = get_platform_string()
             if "aix" in platform:
                 channel, target = 0, int(remote_port.port_wwn._address, 16)
             else:
+                if remote_port.port_wwn not in target_wwpns:
+                    continue
                 channel, target = port_mappings.get(remote_port.port_wwn, (-1, -1))
             remote_port.hct = (port.hct[0], channel, target)
+            port.discovered_ports.append(remote_port)
         return port
 
     def _get_local_port_statistics(self, adapter_handle, port_index, wwn_buffer):
