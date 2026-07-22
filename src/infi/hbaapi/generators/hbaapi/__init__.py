@@ -35,10 +35,17 @@ class HbaApi(Generator):
         Generator.__init__(self)
 
     def _iter_adapters(self):
-        for adapter_index in range (0, c_api.HBA_GetNumberOfAdapters()):
+        number_of_adapters = c_api.HBA_GetNumberOfAdapters()
+        log.debug("HBAAPI reported %s adapters", number_of_adapters)
+
+        for adapter_index in range(0, number_of_adapters):
             adapter_name = ctypes.create_string_buffer(headers.MAX_ADAPTERNAME_LENGTH)
             c_api.HBA_GetAdapterName(adapter_index, adapter_name)
-            log.debug("yield adapter index {} name {!r}".format(adapter_index, adapter_name.value))
+            log.debug(
+                "HBAAPI adapter index=%s name=%r",
+                adapter_index,
+                adapter_name.value,
+            )
             yield adapter_name
 
     def _get_adapter_attributes(self, adapter_handle):
@@ -62,7 +69,25 @@ class HbaApi(Generator):
     def _get_remote_ports(self, adapter_handle, port_index, number_of_remote_ports):
         remote_ports = []
         for remote_port_index in range(0, number_of_remote_ports):
-            remote_port_attributes = self._get_remote_port_attributes(adapter_handle, port_index, remote_port_index)
+            try:
+                remote_port_attributes = self._get_remote_port_attributes(
+                    adapter_handle,
+                    port_index,
+                    remote_port_index,
+                )
+            except (RuntimeError, NotImplementedError) as exception:
+                return_code = exception.args[0] if exception.args else None
+                log.warning(
+                    "Failed to retrieve discovered port index %s for "
+                    "local port index %s with HBA status %r; "
+                    "skipping remote port",
+                    remote_port_index,
+                    port_index,
+                    return_code,
+                    exc_info=True,
+                )
+                continue
+
             remote_port = get_port_object(None, remote_port_attributes)
             log.debug("Found remote port {!r}".format(remote_port.port_wwn))
             if remote_port.port_fcid in WELL_KNOWN_FC_ADDRESSES:
@@ -234,18 +259,59 @@ class HbaApi(Generator):
     def _iter_ports(self):
         with self.hbaapi_library():
             for adapter_name in self._iter_adapters():
+                adapter_name_value = adapter_name.value
+
                 with self.hbaapi_adapter(adapter_name) as adapter_handle:
                     if adapter_handle is None:
                         continue
+
                     try:
                         adapter_attributes = self._get_adapter_attributes(adapter_handle)
                     except NotImplementedError:
                         # because of weird HBAs, like VMWare's "LSI Adapter, SAS 3000 Series"
-                        logging.debug("found a weird host bus adapter, named: %s", adapter_name.value)
+                        log.debug(
+                            "HBA_GetAdapterAttributes is not supported for "
+                            "adapter %r; skipping adapter",
+                            adapter_name_value,
+                        )
                         continue
+                    except RuntimeError as exception:
+                        return_code = exception.args[0] if exception.args else None
+                        log.warning(
+                            "HBA_GetAdapterAttributes failed for adapter %r "
+                            "with HBA status %r; skipping adapter",
+                            adapter_name_value,
+                            return_code,
+                            exc_info=True,
+                        )
+                        continue
+
                     for port_index in range(0, adapter_attributes.NumberOfPorts):
-                        log.debug("yield port index {} for adapter name {}".format(port_index, adapter_name))
-                        local_port = self._get_local_port(adapter_handle, adapter_attributes, port_index)
+                        log.debug(
+                            "Processing port index %s for adapter %r",
+                            port_index,
+                            adapter_name_value,
+                        )
+
+                        try:
+                            local_port = self._get_local_port(
+                                adapter_handle,
+                                adapter_attributes,
+                                port_index,
+                            )
+                        except (RuntimeError, NotImplementedError) as exception:
+                            return_code = exception.args[0] if exception.args else None
+                            log.warning(
+                                "Failed to retrieve port index %s from "
+                                "adapter %r with HBA status %r; "
+                                "skipping port",
+                                port_index,
+                                adapter_name_value,
+                                return_code,
+                                exc_info=True,
+                            )
+                            continue
+
                         yield local_port
 
     def iter_ports(self):
