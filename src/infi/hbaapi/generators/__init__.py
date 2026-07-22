@@ -21,12 +21,17 @@ class CompositeGenerator(Generator):
         self._children = []
 
     def iter_ports(self):
-        for child in self._children:
+        for child_class in self._children:
             try:
-                for port in child().iter_ports():
+                child = child_class()
+                for port in child.iter_ports():
                     yield port
-            except:
-                logger.exception("hbaapi generator raised an exception, skipping this port")
+            except Exception:
+                logger.exception(
+                    "HBAAPI generator %s raised an exception; "
+                    "skipping the remaining output from this generator",
+                    child_class.__name__,
+                )
                 continue
 
     @classmethod
